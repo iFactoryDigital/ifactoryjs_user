@@ -1,1 +1,4 @@
-// EdenJS module does not require an index
+// Export Grid helper instance
+exports = module.exports = {
+  'acl' : helper('user/acl')
+};
