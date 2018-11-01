@@ -1,0 +1,25 @@
+{
+  "name": "@edenjs/user",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eden-js/user.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/eden-js/user/issues"
+  },
+  "homepage": "https://github.com/eden-js/user#readme",
+  "dependencies": {
+    "@edenjs/admin": "^1.0.0",
+    "@edenjs/grid": "^1.0.0",
+    "dot-prop-immutable": "^1.5.0",
+    "escape-string-regexp": "^1.0.5"
+  }
+}
