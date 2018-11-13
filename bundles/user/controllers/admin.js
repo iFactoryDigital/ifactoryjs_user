@@ -47,7 +47,7 @@ class AdminUserController extends Controller {
     // register simple widget
     DashboardHelper.widget('dashboard.user.users', {
       'acl'         : ['admin.user'],
-      'title'       : 'Users Widget',
+      'title'       : 'Users Grid',
       'description' : 'Shows grid of users'
     }, async (req, widget) => {
       // get notes widget from db
