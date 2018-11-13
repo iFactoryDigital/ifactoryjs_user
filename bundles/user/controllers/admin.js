@@ -2,16 +2,18 @@
 // Bind dependencies
 const Grid        = require('grid');
 const alert       = require('alert');
+const config      = require('config');
 const crypto      = require('crypto');
 const Controller  = require('controller');
 const escapeRegex = require('escape-string-regexp');
 
 // Require models
-const Acl  = model('acl');
-const User = model('user');
+const Acl    = model('acl');
+const User   = model('user');
+const Widget = model('widget');
 
-// Bind local dependencies
-const config = require('config');
+// require helpers
+const DashboardHelper = helper('dashboard');
 
 /**
  * Build user admin controller
@@ -41,6 +43,43 @@ class AdminUserController extends Controller {
 
     // Bind private methods
     this._grid = this._grid.bind(this);
+
+    // register simple widget
+    DashboardHelper.widget('dashboard.user.users', {
+      'acl'         : ['admin.user'],
+      'title'       : 'Users Widget',
+      'description' : 'Shows grid of users'
+    }, async (req, widget) => {
+      // get notes widget from db
+      let widgetModel = await Widget.findOne({
+        'uuid' : widget.uuid
+      }) || new Widget({
+        'uuid' : widget.uuid,
+        'type' : widget.type
+      });
+
+      // return
+      return {
+        'tag'   : 'grid',
+        'name'  : 'Users',
+        'grid'  : await this._grid(req).render(req),
+        'title' : widgetModel.get('title') || ''
+      };
+    }, async (req, widget) => {
+      // get notes widget from db
+      let widgetModel = await Widget.findOne({
+        'uuid' : widget.uuid
+      }) || new Widget({
+        'uuid' : widget.uuid,
+        'type' : widget.type
+      });
+
+      // set data
+      widgetModel.set('title', req.body.data.title);
+
+      // save widget
+      await widgetModel.save();
+    });
   }
 
   /**

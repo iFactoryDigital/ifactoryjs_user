@@ -1,20 +1,18 @@
 <user-admin-page>
-  <div class="users-admin">
+  <div class="page page-user">
 
-    <!-- page header -->
-    <div class="mb-5 mt-0">
-      <h4 class="page-title mb-0 text-center text-md-left">
-
-        <i class="fa fa-user mr-3" /> Manage Users
-
-        <a href="/admin/user/create" class="btn btn-primary float-right">
-          <i class="fa fa-plus ml-2"></i> Create
+    <admin-header title="Manage Users">
+      <yield to="right">
+        <a href="/admin/user/create" class="btn btn-lg btn-success">
+          Create
         </a>
-
-      </h4>
+      </yield>
+    </admin-header>
+    
+    <div class="container-fluid">
+    
+      <grid grid={ opts.grid } table-class="table table-striped table-bordered" title="Users Grid" />
+      
     </div>
-    <!-- / page header -->
-
-    <grid grid={ opts.grid } table-class="table table-striped table-bordered" title="Users Grid" />
   </div>
 </user-admin-page>
