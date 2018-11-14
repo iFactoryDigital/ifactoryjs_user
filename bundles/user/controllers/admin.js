@@ -8,12 +8,12 @@ const Controller  = require('controller');
 const escapeRegex = require('escape-string-regexp');
 
 // Require models
-const Acl    = model('acl');
-const User   = model('user');
-const Widget = model('widget');
+const Acl   = model('acl');
+const User  = model('user');
+const Block = model('block');
 
 // require helpers
-const DashboardHelper = helper('dashboard');
+const BlockHelper = helper('cms/block');
 
 /**
  * Build user admin controller
@@ -44,23 +44,23 @@ class AdminUserController extends Controller {
     // Bind private methods
     this._grid = this._grid.bind(this);
 
-    // register simple widget
-    DashboardHelper.widget('dashboard.user.users', {
+    // register simple block
+    BlockHelper.block('dashboard.user.users', {
       'acl'         : ['admin.user'],
       'title'       : 'Users Grid',
       'description' : 'Shows grid of users'
-    }, async (req, widget) => {
-      // get notes widget from db
-      let widgetModel = await Widget.findOne({
-        'uuid' : widget.uuid
-      }) || new Widget({
-        'uuid' : widget.uuid,
-        'type' : widget.type
+    }, async (req, block) => {
+      // get notes block from db
+      let blockModel = await Block.findOne({
+        'uuid' : block.uuid
+      }) || new Block({
+        'uuid' : block.uuid,
+        'type' : block.type
       });
 
       // create new req
       let fauxReq = {
-        'query' : widgetModel.get('state') || {}
+        'query' : blockModel.get('state') || {}
       };
 
       // return
@@ -68,23 +68,23 @@ class AdminUserController extends Controller {
         'tag'   : 'grid',
         'name'  : 'Users',
         'grid'  : await this._grid(req).render(fauxReq),
-        'title' : widgetModel.get('title') || ''
+        'title' : blockModel.get('title') || ''
       };
-    }, async (req, widget) => {
-      // get notes widget from db
-      let widgetModel = await Widget.findOne({
-        'uuid' : widget.uuid
-      }) || new Widget({
-        'uuid' : widget.uuid,
-        'type' : widget.type
+    }, async (req, block) => {
+      // get notes block from db
+      let blockModel = await Block.findOne({
+        'uuid' : block.uuid
+      }) || new Block({
+        'uuid' : block.uuid,
+        'type' : block.type
       });
 
       // set data
-      widgetModel.set('title', req.body.data.title);
-      widgetModel.set('state', req.body.data.state);
+      blockModel.set('title', req.body.data.title);
+      blockModel.set('state', req.body.data.state);
 
-      // save widget
-      await widgetModel.save();
+      // save block
+      await blockModel.save();
     });
   }
 
