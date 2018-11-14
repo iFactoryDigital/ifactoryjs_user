@@ -47,6 +47,7 @@ class AdminUserController extends Controller {
     // register simple block
     BlockHelper.block('dashboard.user.users', {
       'acl'         : ['admin.user'],
+      'for'         : ['admin'],
       'title'       : 'Users Grid',
       'description' : 'Shows grid of users'
     }, async (req, block) => {
@@ -68,6 +69,7 @@ class AdminUserController extends Controller {
         'tag'   : 'grid',
         'name'  : 'Users',
         'grid'  : await this._grid(req).render(fauxReq),
+        'class' : blockModel.get('class') || null,
         'title' : blockModel.get('title') || ''
       };
     }, async (req, block) => {
@@ -80,6 +82,7 @@ class AdminUserController extends Controller {
       });
 
       // set data
+      blockModel.set('class', req.body.data.class);
       blockModel.set('title', req.body.data.title);
       blockModel.set('state', req.body.data.state);
 
