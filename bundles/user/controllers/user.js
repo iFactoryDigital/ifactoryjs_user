@@ -5,24 +5,26 @@ const crypto      = require('crypto');
 const config      = require('config');
 const socket      = require('socket');
 const passport    = require('passport');
-const controller  = require('controller');
+const Controller  = require('controller');
 const escapeRegex = require('escape-string-regexp');
 
 // Require models
-const acl   = model('acl');
-const user  = model('user');
-const login = model('login');
+const Acl   = model('acl');
+const User  = model('user');
+const Block = model('block');
+const Login = model('login');
 
 // Require local dependencies
-const email     = helper('email');
-const aclHelper = helper('user/acl');
+const AclHelper   = helper('user/acl');
+const EmailHelper = helper('email');
+const BlockHelper = helper('cms/block');
 
 /**
  * Create user controller
  *
  * @priority 10
  */
-class userController extends controller {
+class UserController extends Controller {
 
   /**
    * Constructor for user controller
@@ -82,9 +84,9 @@ class userController extends controller {
     passport.use(new Local(this._authenticate));
 
     // Serializes user
-    passport.serializeUser((User, done) => {
+    passport.serializeUser((user, done) => {
       // Emit done
-      done(null, User.get('_id').toString());
+      done(null, user.get('_id').toString());
     });
 
     // Deserialize user
@@ -95,6 +97,53 @@ class userController extends controller {
 
     // Check acl
     this._acl();
+
+    // set blocks
+    let blocks = ['login', 'register', 'forgot'];
+
+    // do blocks
+    blocks.forEach((b) => {
+      // get uppercase
+      let upper = b.charAt(0).toUpperCase() + b.slice(1);
+
+      // register simple block
+      BlockHelper.block('user.' + b, {
+        'acl'         : false,
+        'for'         : ['frontend'],
+        'title'       : upper + ' Form',
+        'description' : upper + ' Form block'
+      }, async (req, block) => {
+        // get notes block from db
+        let blockModel = await Block.findOne({
+          'uuid' : block.uuid
+        }) || new Block({
+          'uuid' : block.uuid,
+          'type' : block.type
+        });
+
+        // return
+        return {
+          'tag'   : b,
+          'color' : blockModel.get('color') || null,
+          'class' : blockModel.get('class') || null
+        };
+      }, async (req, block) => {
+        // get notes block from db
+        let blockModel = await Block.findOne({
+          'uuid' : block.uuid
+        }) || new Block({
+          'uuid' : block.uuid,
+          'type' : block.type
+        });
+
+        // set data
+        blockModel.set('color', req.body.data.color);
+        blockModel.set('class', req.body.data.class);
+
+        // save block
+        await blockModel.save();
+      });
+    });
   }
 
   /**
@@ -150,9 +199,9 @@ class userController extends controller {
    */
   loginSubmitAction (req, res, next) {
     // Authenticate with passport
-    passport.authenticate('local', (err, User, info) => {
+    passport.authenticate('local', (err, user, info) => {
       // Check user exists
-      if (!User || err) {
+      if (!user || err) {
         // Alert user
         req.alert('error', err || info.message);
 
@@ -172,9 +221,9 @@ class userController extends controller {
       }
 
       // Do passport login
-      req.login(User, {}, async () => {
+      req.login(user, {}, async () => {
         // Emit to socket
-        socket.session(req.sessionID, 'user', await User.sanitise());
+        socket.session(req.sessionID, 'user', await user.sanitise());
 
         // Send alert
         await req.alert('success', 'Successfully logged in', {
@@ -184,7 +233,7 @@ class userController extends controller {
         // Hook user login
         await this.eden.emit('user.login', {
           'req'  : req,
-          'user' : User
+          'user' : user
         });
 
         // Redirect to home
@@ -210,12 +259,12 @@ class userController extends controller {
     // Check if token
     if (req.query.token) {
       // Load user
-      let User = await user.findOne({
+      let user = await User.findOne({
         'token' : req.query.token
       });
 
       // Check user
-      if (!User) {
+      if (!user) {
         // Send alert
         req.alert('error', 'The token you have sent is invalid');
 
@@ -225,7 +274,7 @@ class userController extends controller {
 
       // Render reset
       return res.render('reset', {
-        'token' : User.get('token')
+        'token' : user.get('token')
       });
     }
 
@@ -251,12 +300,12 @@ class userController extends controller {
     if (!req.body.token) return res.redirect('/forgot');
 
     // Load user
-    let User = await user.findOne({
+    let user = await User.findOne({
       'token' : req.body.token
     });
 
     // Check user
-    if (!User) {
+    if (!user) {
       // Send alert
       req.alert('error', 'The token you have used is invalid');
 
@@ -292,10 +341,10 @@ class userController extends controller {
       .digest('hex');
 
     // Create user
-    User.set('hash', hash);
+    user.set('hash', hash);
 
     // Save user
-    await User.save();
+    await user.save();
 
     // Send alert
     req.alert('success', 'Successfully updated your password');
@@ -319,14 +368,14 @@ class userController extends controller {
    */
   async forgotSubmitAction (req, res) {
     // Load user
-    let User = await user.or({
+    let user = await User.or({
       'email' : new RegExp(['^', escapeRegex(req.body.username.toLowerCase()), '$'].join(''), 'i')
     }, {
       'username' : new RegExp(['^', escapeRegex(req.body.username.toLowerCase()), '$'].join(''), 'i')
     }).findOne();
 
     // Check user exists
-    if (!User) {
+    if (!user) {
       // Send error
       req.alert('error', 'Username not found');
 
@@ -335,23 +384,23 @@ class userController extends controller {
     }
 
     // Check email
-    if (!User.get('email')) {
+    if (!user.get('email')) {
       // Send alert
       return req.alert('error', 'User does not have an email');
     }
 
     // Set token
-    User.set('token', crypto.randomBytes(Math.ceil(24 / 2)).toString('hex').slice(0, 24));
+    user.set('token', crypto.randomBytes(Math.ceil(24 / 2)).toString('hex').slice(0, 24));
 
     // Save user
-    await User.save();
+    await user.save();
 
     // Alert
     req.alert('success', 'An email has been sent with your password reset token');
 
     // Send email
-    email.send(User.get('email') || User.get('username'), 'forgot', {
-      'token'   : User.get('token'),
+    EmailHelper.send(user.get('email') || user.get('username'), 'forgot', {
+      'token'   : user.get('token'),
       'subject' : config.get('domain') + ' - forgot password'
     });
 
@@ -424,7 +473,7 @@ class userController extends controller {
    */
   async registerSubmitAction (req, res) {
     // Create user
-    let User = new user();
+    let user = new User();
 
     // Check username
     if (req.body.username.trim().length < 5) {
@@ -441,12 +490,12 @@ class userController extends controller {
     // Check email
     if (req.body.email && req.body.email.length) {
       // Check email
-      let Email = await user.findOne({
+      let email = await User.findOne({
         'email' : new RegExp(['^', escapeRegex(req.body.email), '$'].join(''), 'i')
       });
 
       // If Email
-      if (Email) {
+      if (email) {
         // Send alert
         req.alert('error', 'the email "' + req.body.email + '" is already taken');
 
@@ -458,16 +507,16 @@ class userController extends controller {
       }
 
       // Set email
-      User.set('email', req.body.email);
+      user.set('email', req.body.email);
     }
 
     // Check for user
-    let Username = await user.findOne({
+    let username = await User.findOne({
       'username' : new RegExp(['^', escapeRegex(req.body.username), '$'].join(''), 'i')
     });
 
     // Check if user exists
-    if (Username) {
+    if (username) {
       // Send alert
       req.alert('error', 'the username "' + req.body.username + '" is already taken');
 
@@ -479,7 +528,7 @@ class userController extends controller {
     }
 
     // Set email
-    User.set('username', req.body.username);
+    user.set('username', req.body.username);
 
     // Check password length
     if (req.body.password.trim().length < 5) {
@@ -511,7 +560,7 @@ class userController extends controller {
       .digest('hex');
 
     // Set hash
-    User.set('hash', hash);
+    user.set('hash', hash);
 
     // Let prevented
     let prevented = false;
@@ -519,7 +568,7 @@ class userController extends controller {
     // Hook user login
     await this.eden.hook('user.register', {
       'req'  : req,
-      'user' : User
+      'user' : user
     }, async (obj) => {
       // Check error
       if (obj.error) {
@@ -534,11 +583,11 @@ class userController extends controller {
       }
 
       // Save user
-      await User.save();
+      await user.save();
     });
 
     // Log user in
-    if (!prevented) req.login(User, async () => {
+    if (!prevented) req.login(user, async () => {
       // Send alert
       await req.alert('success', 'You are now successfully registered', {
         'save' : true
@@ -547,11 +596,11 @@ class userController extends controller {
       // Hook user login
       await this.eden.emit('user.login', {
         'req'  : req,
-        'user' : User
+        'user' : user
       });
 
       // Emit to socket
-      socket.session(req.sessionID, 'user', await User.sanitise());
+      socket.session(req.sessionID, 'user', await user.sanitise());
 
       // Redirect to home
       res.redirect(req.query.redirect || req.body.redirect || '/');
@@ -567,7 +616,7 @@ class userController extends controller {
    */
   async _user (req, res, next) {
     // Set user locally
-    res.locals.acl  = await aclHelper.list(req.user);
+    res.locals.acl  = await AclHelper.list(req.user);
     res.locals.user = req.user ? await req.user.sanitise() : false;
 
     // Run next
@@ -579,25 +628,25 @@ class userController extends controller {
    */
   async _acl () {
     // Create test array
-    let Acls = (config.get('acl.default') || []).slice(0);
+    let acls = (config.get('acl.default') || []).slice(0);
 
     // Check if array
-    if (!Array.isArray(Acls)) Acls = [Acls];
+    if (!Array.isArray(acls)) acls = [acls];
 
     // Push admin Acls
-    Acls.push(...(config.get('acl.admin') || []).slice(0));
+    acls.push(...(config.get('acl.admin') || []).slice(0));
 
     // Check acls
-    for (let i = 0; i < Acls.length; i++) {
+    for (let i = 0; i < acls.length; i++) {
       // Load acl
-      let check = await acl.count({
-        'name' : Acls[i].name
+      let check = await Acl.count({
+        'name' : acls[i].name
       });
 
       // Creat if not exists
       if (!check) {
         // Set create
-        let create = new acl(Acls[i]);
+        let create = new Acl(acls[i]);
 
         // Save
         await create.save();
@@ -612,7 +661,7 @@ class userController extends controller {
    */
   async _login (obj) {
     // Add to login
-    let Login = new login({
+    let login = new Login({
       'ip'      : obj.req ? obj.req.headers['x-forwarded-for'] || obj.req.connection.remoteAddress.replace(/^.*:/, '') : false,
       'way'     : 'login',
       'fail'    : !!obj.fail,
@@ -621,7 +670,7 @@ class userController extends controller {
     });
 
     // Save login
-    await Login.save();
+    await login.save();
   }
 
   /**
@@ -631,26 +680,26 @@ class userController extends controller {
    */
   async _register (obj) {
     // Load user
-    let Acls = (config.get('acl.default') || []).slice(0);
+    let def  = (config.get('acl.default') || []).slice(0);
     let acls = [];
-    let User = obj.user;
+    let user = obj.user;
 
     // Set as array
-    if (!Array.isArray(Acls)) Acls = [Acls];
+    if (!Array.isArray(def)) def = [def];
 
     // Check acls
-    let count = await user.count();
+    let count = await User.count();
 
     // Add admin roles
     if (count === 0) {
-      Acls.push(...(config.get('acl.admin') || []).slice(0));
+      def.push(...(config.get('acl.admin') || []).slice(0));
     }
 
     // Load acls
-    for (let i = 0; i < Acls.length; i++) {
+    for (let i = 0; i < def.length; i++) {
       // Load acl
-      let check = await acl.findOne({
-        'name' : Acls[i].name
+      let check = await Acl.findOne({
+        'name' : def[i].name
       });
 
       // Check check
@@ -658,7 +707,7 @@ class userController extends controller {
     }
 
     // Set acls
-    User.set('acl', acls);
+    user.set('acl', acls);
   }
 
   /**
@@ -668,7 +717,7 @@ class userController extends controller {
    */
   async _logout (obj) {
     // Add to login
-    let Login = new login({
+    let login = new Login({
       'ip'      : obj.req ? obj.req.headers['x-forwarded-for'] || obj.req.connection.remoteAddress : false,
       'way'     : 'logout',
       'fail'    : false,
@@ -677,7 +726,7 @@ class userController extends controller {
     });
 
     // Save login
-    await Login.save();
+    await login.save();
   }
 
   /**
@@ -691,11 +740,11 @@ class userController extends controller {
    */
   async _authenticate (username, password, done) {
     // Find user
-    let User = await user.match('username', new RegExp(['^', escapeRegex(username), '$'].join(''), 'i')).findOne() ||
-               await user.match('email', new RegExp(['^', escapeRegex(username), '$'].join(''), 'i')).findOne();
+    let user = await User.match('username', new RegExp(['^', escapeRegex(username), '$'].join(''), 'i')).findOne() ||
+               await User.match('email', new RegExp(['^', escapeRegex(username), '$'].join(''), 'i')).findOne();
 
     // Check user exists
-    if (!User) {
+    if (!user) {
       // Return done
       return done(null, false, {
         'user'    : false,
@@ -704,18 +753,18 @@ class userController extends controller {
     }
 
     // Authenticate
-    let result = await User.authenticate(password);
+    let result = await user.authenticate(password);
 
     // Check error
     if (result !== true) {
       return done(null, false, {
-        'user'    : User,
+        'user'    : user,
         'message' : result.info
       });
     }
 
     // Send done
-    done(null, User);
+    done(null, user);
   }
 
   /**
@@ -726,16 +775,16 @@ class userController extends controller {
    */
   async _deserialise (id, done) {
     // Find user by id
-    let User = await user.findById(id);
+    let user = await User.findById(id);
 
     // Callback done with user
-    done(null, User);
+    done(null, user);
   }
 }
 
 /**
  * Eport user controller
  *
- * @type {userController}
+ * @type {UserController}
  */
-exports = module.exports = userController;
+exports = module.exports = UserController;
