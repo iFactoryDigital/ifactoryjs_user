@@ -124,7 +124,7 @@ class UserController extends Controller {
         // return
         return {
           'tag'   : b,
-          'color' : blockModel.get('color') || null,
+          'card'  : blockModel.get('card') || null,
           'class' : blockModel.get('class') || null
         };
       }, async (req, block) => {
@@ -137,7 +137,7 @@ class UserController extends Controller {
         });
 
         // set data
-        blockModel.set('color', req.body.data.color);
+        blockModel.set('card',  req.body.data.card);
         blockModel.set('class', req.body.data.class);
 
         // save block
