@@ -444,8 +444,16 @@ class AdminUserController extends Controller {
     }).column('acl', {
       'title'  : 'Roles',
       'format' : async (col, row) => {
+        // Fetch acls
+        const fetchedAcls = await row.get('acl');
+
+        // Return if none
+        if (fetchedAcls === null || fetchedAcls === undefined) {
+          return '';
+        }
+
         // Set acls
-        let acls = (await row.get('acl')).filter((acl) => acl && acl.get);
+        let acls = fetchedAcls.filter((acl) => acl && acl.get);
 
         // Return mapped
         return acls.map((acl) => acl.get('name')).join(', ');
