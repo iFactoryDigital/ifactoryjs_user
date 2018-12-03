@@ -1,6 +1,6 @@
 {
   "name": "@edenjs/user",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -17,8 +17,6 @@
   },
   "homepage": "https://github.com/eden-js/user#readme",
   "dependencies": {
-    "@edenjs/admin": "^1.0.0",
-    "@edenjs/grid": "^1.0.0",
     "dot-prop-immutable": "^1.5.0",
     "escape-string-regexp": "^1.0.5",
     "passport": "^0.4.0",
