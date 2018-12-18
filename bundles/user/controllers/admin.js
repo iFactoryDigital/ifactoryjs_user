@@ -66,11 +66,9 @@ class AdminUserController extends Controller {
 
       // return
       return {
-        'tag'   : 'grid',
-        'name'  : 'Users',
-        'grid'  : await this._grid(req).render(fauxReq),
-        'class' : blockModel.get('class') || null,
-        'title' : blockModel.get('title') || ''
+        'tag'  : 'grid',
+        'name' : 'Users',
+        'grid' : await this._grid(req).render(fauxReq)
       };
     }, async (req, block) => {
       // get notes block from db
@@ -82,8 +80,6 @@ class AdminUserController extends Controller {
       });
 
       // set data
-      blockModel.set('class', req.body.data.class);
-      blockModel.set('title', req.body.data.title);
       blockModel.set('state', req.body.data.state);
 
       // save block

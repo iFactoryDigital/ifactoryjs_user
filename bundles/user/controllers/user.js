@@ -113,36 +113,11 @@ class UserController extends Controller {
         'title'       : upper + ' Form',
         'description' : upper + ' Form block'
       }, async (req, block) => {
-        // get notes block from db
-        let blockModel = await Block.findOne({
-          'uuid' : block.uuid
-        }) || new Block({
-          'uuid' : block.uuid,
-          'type' : block.type
-        });
-
         // return
         return {
-          'tag'   : b,
-          'card'  : blockModel.get('card') || null,
-          'class' : blockModel.get('class') || null
+          'tag' : b
         };
-      }, async (req, block) => {
-        // get notes block from db
-        let blockModel = await Block.findOne({
-          'uuid' : block.uuid
-        }) || new Block({
-          'uuid' : block.uuid,
-          'type' : block.type
-        });
-
-        // set data
-        blockModel.set('card',  req.body.data.card);
-        blockModel.set('class', req.body.data.class);
-
-        // save block
-        await blockModel.save();
-      });
+      }, async (req, block) => { });
     });
   }
 
@@ -774,6 +749,7 @@ class UserController extends Controller {
    * @param {Function} done
    */
   async _deserialise (id, done) {
+    console.log(id, done);
     // Find user by id
     let user = await User.findById(id);
 
