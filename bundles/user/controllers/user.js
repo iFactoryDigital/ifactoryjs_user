@@ -749,7 +749,6 @@ class UserController extends Controller {
    * @param {Function} done
    */
   async _deserialise (id, done) {
-    console.log(id, done);
     // Find user by id
     let user = await User.findById(id);
 
