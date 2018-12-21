@@ -5,14 +5,13 @@ const dotProp = require('dot-prop-immutable');
  * Build acl class
  */
 class aclHelper {
-
   /**
    * Construct acl class
    */
-  constructor () {
+  constructor() {
     // Bind methods
-    this.list       = this.list.bind(this);
-    this.validate   = this.validate.bind(this);
+    this.list = this.list.bind(this);
+    this.validate = this.validate.bind(this);
     this.middleware = this.middleware.bind(this);
   }
 
@@ -30,15 +29,15 @@ class aclHelper {
    *
    * @return {Promise}
    */
-  async validate (User, tests) {
+  async validate(User, tests) {
     // Get list
     let obj  = {};
-    let list = await this.list(User);
+    const list = await this.list(User);
 
     // Check is array
     if (Array.isArray(list)) {
       // Set list
-      for (let item of list) {
+      for (const item of list) {
         // Set value
         obj = dotProp.set(obj, item, true);
       }
@@ -57,7 +56,7 @@ class aclHelper {
       if (list === true) return false;
 
       // Loop props
-      return !dotProp.get(obj, test) && !dotProp.get(obj, test.split('.').slice(0, -1).join('.') + '.*');
+      return !dotProp.get(obj, test) && !dotProp.get(obj, `${test.split('.').slice(0, -1).join('.')}.*`);
     })).length;
   }
 
@@ -75,13 +74,13 @@ class aclHelper {
    * @return {Array|Boolean}
    * @private
    */
-  async list (User) {
+  async list(User) {
     // Return array if no user
     if (!User) return [];
 
     // Get groups
-    let acls = [];
-    let Acls = await User.get('acl') || [];
+    const acls = [];
+    const Acls = await User.get('acl') || [];
 
     // Loop Acls
     for (let a = 0; a < Acls.length; a++) {
@@ -122,12 +121,12 @@ class aclHelper {
    *
    * @return {Integer}
    */
-  async middleware (req, res) {
+  async middleware(req, res) {
     // Check route has acl
     if (!res.locals.route || !res.locals.route.acl || !res.locals.route.acl.length) return true;
 
     // Check acl
-    let check = await this.validate(req.user, res.locals.route.acl);
+    const check = await this.validate(req.user, res.locals.route.acl);
 
     // Check if true
     if (!check) {

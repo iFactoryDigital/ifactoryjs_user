@@ -8,11 +8,11 @@ const config = require('config');
 const crypto = require('crypto');
 
 // Create test user info
-let testInfo = {
-  '_id'      : 1,
-  'balance'  : 10,
-  'username' : 'test',
-  'password' : 'testPass123'
+const testInfo = {
+  _id      : 1,
+  balance  : 10,
+  username : 'test',
+  password : 'testPass123',
 };
 
 // Create test user password hash
@@ -22,11 +22,11 @@ testInfo.hash = crypto
   .digest('hex');
 
 // Create test user
-let testUser = new user({
-  '_id'      : testInfo._id,
-  'hash'     : testInfo.hash,
-  'balance'  : testInfo.balance,
-  'username' : testInfo.username
+const testUser = new user({
+  _id      : testInfo._id,
+  hash     : testInfo.hash,
+  balance  : testInfo.balance,
+  username : testInfo.username,
 });
 
 // Describe user model

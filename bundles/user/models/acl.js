@@ -6,11 +6,10 @@ const Model = require('model');
  * Create acl model
  */
 class Acl extends Model {
-
   /**
    * Construct acl model
    */
-  constructor () {
+  constructor() {
     // Run super
     super(...arguments);
   }
@@ -20,12 +19,12 @@ class Acl extends Model {
    *
    * @return {*}
    */
-  sanitise () {
+  sanitise() {
     // Return id/name/value
     return {
-      'id'    : this.get('_id') ? this.get('_id').toString() : false,
-      'name'  : this.get('name'),
-      'value' : this.get('value')
+      id    : this.get('_id') ? this.get('_id').toString() : false,
+      name  : this.get('name'),
+      value : this.get('value'),
     };
   }
 }

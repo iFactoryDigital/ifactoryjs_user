@@ -8,13 +8,12 @@ const store = require('default/public/js/store');
  * Build acl class
  */
 class AclUtility {
-
   /**
    * Construct acl class
    */
-  constructor () {
+  constructor() {
     // Bind methods
-    this.list     = this.list.bind(this);
+    this.list = this.list.bind(this);
     this.validate = this.validate.bind(this);
   }
 
@@ -26,10 +25,10 @@ class AclUtility {
    *
    * @returns {Boolean}
    */
-  validate (tests, list) {
+  validate(tests, list) {
     // Get list
     let obj  = {};
-    let user = store.user || store.get('user');
+    const user = store.user || store.get('user');
 
     // Set list
     list = list || this.list();
@@ -37,7 +36,7 @@ class AclUtility {
     // Check is array
     if (Array.isArray(list)) {
       // Set list
-      for (let item of list) {
+      for (const item of list) {
         // Set value
         obj = dotProp.set(obj, item, true);
       }
@@ -56,7 +55,7 @@ class AclUtility {
       if (list === true) return false;
 
       // Loop props
-      return !dotProp.get(obj, test) && !dotProp.get(obj, test.split('.').slice(0, -1).join('.') + '.*');
+      return !dotProp.get(obj, test) && !dotProp.get(obj, `${test.split('.').slice(0, -1).join('.')}.*`);
     })).length;
   }
 
@@ -65,16 +64,16 @@ class AclUtility {
    *
    * @returns {Array}
    */
-  list () {
+  list() {
     // Set user
-    let user = store.user || store.get('user');
+    const user = store.user || store.get('user');
 
     // Return array if no user
     if (!user || !user.id) return [];
 
     // Get groups
-    let acls = [];
-    let Acls = user.acls || [];
+    const acls = [];
+    const Acls = user.acls || [];
 
     // Loop Acls
     for (let a = 0; a < Acls.length; a++) {

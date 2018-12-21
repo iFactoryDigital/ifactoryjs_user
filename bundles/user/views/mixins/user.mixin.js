@@ -4,7 +4,7 @@ riot.mixin('user', {
   /**
    * On init function
    */
-  'init' : function () {
+  init() {
     // Set value
     this.user = this.eden.get('user') || {};
 
@@ -46,5 +46,5 @@ riot.mixin('user', {
         this.user.removeListener('update', this.update);
       });
     }
-  }
+  },
 });
