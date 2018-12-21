@@ -25,30 +25,29 @@ const BlockHelper = helper('cms/block');
  * @priority 10
  */
 class UserController extends Controller {
-
   /**
    * Constructor for user controller
    *
    * @param {eden} eden
    */
-  constructor () {
+  constructor() {
     // Run super
     super();
 
     // Bind methods
-    this.build                = this.build.bind(this);
-    this.loginAction          = this.loginAction.bind(this);
-    this.logoutAction         = this.logoutAction.bind(this);
-    this.refreshAction        = this.refreshAction.bind(this);
-    this.registerAction       = this.registerAction.bind(this);
-    this.loginSubmitAction    = this.loginSubmitAction.bind(this);
+    this.build = this.build.bind(this);
+    this.loginAction = this.loginAction.bind(this);
+    this.logoutAction = this.logoutAction.bind(this);
+    this.refreshAction = this.refreshAction.bind(this);
+    this.registerAction = this.registerAction.bind(this);
+    this.loginSubmitAction = this.loginSubmitAction.bind(this);
     this.registerSubmitAction = this.registerSubmitAction.bind(this);
 
     // Bind private methods
-    this._user         = this._user.bind(this);
-    this._login        = this._login.bind(this);
-    this._logout       = this._logout.bind(this);
-    this._deserialise  = this._deserialise.bind(this);
+    this._user = this._user.bind(this);
+    this._login = this._login.bind(this);
+    this._logout = this._logout.bind(this);
+    this._deserialise = this._deserialise.bind(this);
     this._authenticate = this._authenticate.bind(this);
 
     // Run
@@ -58,7 +57,7 @@ class UserController extends Controller {
   /**
    * Builds user controller
    */
-  build () {
+  build() {
     // On render
     this.eden.pre('view.compile', (render) => {
       // Move menus
@@ -69,8 +68,8 @@ class UserController extends Controller {
     });
 
     // Login event listeners
-    this.eden.on('user.login',      this._login);
-    this.eden.on('user.logout',     this._logout);
+    this.eden.on('user.login', this._login);
+    this.eden.on('user.logout', this._logout);
     this.eden.on('user.login.fail', this._login);
 
     // Hook listen methods
@@ -99,23 +98,23 @@ class UserController extends Controller {
     this._acl();
 
     // set blocks
-    let blocks = ['login', 'register', 'forgot'];
+    const blocks = ['login', 'register', 'forgot'];
 
     // do blocks
     blocks.forEach((b) => {
       // get uppercase
-      let upper = b.charAt(0).toUpperCase() + b.slice(1);
+      const upper = b.charAt(0).toUpperCase() + b.slice(1);
 
       // register simple block
-      BlockHelper.block('user.' + b, {
-        'acl'         : false,
-        'for'         : ['frontend'],
-        'title'       : upper + ' Form',
-        'description' : upper + ' Form block'
+      BlockHelper.block(`user.${b}`, {
+        acl         : false,
+        for         : ['frontend'],
+        title       : `${upper} Form`,
+        description : `${upper} Form block`,
       }, async (req, block) => {
         // return
         return {
-          'tag' : b
+          tag : b,
         };
       }, async (req, block) => { });
     });
@@ -130,14 +129,13 @@ class UserController extends Controller {
    *
    * @return {Promise}
    */
-  async refreshAction (opts) {
+  async refreshAction(opts) {
     // Return opts
     if (opts.user) {
       // Sanitise user
       return await opts.user.sanitise();
-    } else {
-      return null;
     }
+    return null;
   }
 
   /**
@@ -153,10 +151,10 @@ class UserController extends Controller {
    * @route    {get} /login
    * @priority 2
    */
-  loginAction (req, res) {
+  loginAction(req, res) {
     // Render login page
     res.render('login', {
-      'redirect' : req.query.redirect || false
+      redirect : req.query.redirect || false,
     });
   }
 
@@ -172,7 +170,7 @@ class UserController extends Controller {
    * @title Login
    * @route {post} /login
    */
-  loginSubmitAction (req, res, next) {
+  loginSubmitAction(req, res, next) {
     // Authenticate with passport
     passport.authenticate('local', (err, user, info) => {
       // Check user exists
@@ -182,16 +180,16 @@ class UserController extends Controller {
 
         // Emit event
         this.eden.emit('user.login.fail', {
-          'req'     : req,
-          'fail'    : true,
-          'user'    : info.user,
-          'message' : err || info.message
+          req,
+          fail    : true,
+          user    : info.user,
+          message : err || info.message,
         });
 
         // Render login page
         return res.render('login', {
-          'old'      : req.body,
-          'redirect' : (req.query || {}).redirect || req.body.redirect || false
+          old      : req.body,
+          redirect : (req.query || {}).redirect || req.body.redirect || false,
         });
       }
 
@@ -202,13 +200,13 @@ class UserController extends Controller {
 
         // Send alert
         await req.alert('success', 'Successfully logged in', {
-          'save' : true
+          save : true,
         });
 
         // Hook user login
         await this.eden.emit('user.login', {
-          'req'  : req,
-          'user' : user
+          req,
+          user,
         });
 
         // Redirect to home
@@ -230,12 +228,12 @@ class UserController extends Controller {
    *
    * @return {*}
    */
-  async forgotAction (req, res) {
+  async forgotAction(req, res) {
     // Check if token
     if (req.query.token) {
       // Load user
-      let user = await User.findOne({
-        'token' : req.query.token
+      const user = await User.findOne({
+        token : req.query.token,
       });
 
       // Check user
@@ -249,7 +247,7 @@ class UserController extends Controller {
 
       // Render reset
       return res.render('reset', {
-        'token' : user.get('token')
+        token : user.get('token'),
       });
     }
 
@@ -270,13 +268,13 @@ class UserController extends Controller {
    *
    * @return {*}
    */
-  async resetSubmitAction (req, res) {
+  async resetSubmitAction(req, res) {
     // Check if token
     if (!req.body.token) return res.redirect('/forgot');
 
     // Load user
-    let user = await User.findOne({
-      'token' : req.body.token
+    const user = await User.findOne({
+      token : req.body.token,
     });
 
     // Check user
@@ -295,7 +293,7 @@ class UserController extends Controller {
 
       // Render registration page
       return res.render('reset', {
-        'token' : req.body.token
+        token : req.body.token,
       });
     }
 
@@ -306,12 +304,12 @@ class UserController extends Controller {
 
       // Render registration page
       return res.render('reset', {
-        'token' : req.body.token
+        token : req.body.token,
       });
     }
 
     // Everything checks out
-    let hash = crypto.createHmac('sha256', config.get('secret'))
+    const hash = crypto.createHmac('sha256', config.get('secret'))
       .update(req.body.password)
       .digest('hex');
 
@@ -341,12 +339,12 @@ class UserController extends Controller {
    * @title Forgot Password
    * @route {post} /forgot
    */
-  async forgotSubmitAction (req, res) {
+  async forgotSubmitAction(req, res) {
     // Load user
-    let user = await User.or({
-      'email' : new RegExp(['^', escapeRegex(req.body.username.toLowerCase()), '$'].join(''), 'i')
+    const user = await User.or({
+      email : new RegExp(['^', escapeRegex(req.body.username.toLowerCase()), '$'].join(''), 'i'),
     }, {
-      'username' : new RegExp(['^', escapeRegex(req.body.username.toLowerCase()), '$'].join(''), 'i')
+      username : new RegExp(['^', escapeRegex(req.body.username.toLowerCase()), '$'].join(''), 'i'),
     }).findOne();
 
     // Check user exists
@@ -375,8 +373,8 @@ class UserController extends Controller {
 
     // Send email
     EmailHelper.send(user.get('email') || user.get('username'), 'forgot', {
-      'token'   : user.get('token'),
-      'subject' : config.get('domain') + ' - forgot password'
+      token   : user.get('token'),
+      subject : `${config.get('domain')} - forgot password`,
     });
 
     // Return redirect
@@ -395,11 +393,11 @@ class UserController extends Controller {
    * @route    {get} /logout
    * @priority 2
    */
-  async logoutAction (req, res) {
+  async logoutAction(req, res) {
     // Hook user login
     await this.eden.emit('user.logout', {
-      'req'  : req,
-      'user' : req.user
+      req,
+      user : req.user,
     });
 
     // Logout
@@ -410,7 +408,7 @@ class UserController extends Controller {
 
     // Send alert
     await req.alert('success', 'Successfully logged out', {
-      'save' : true
+      save : true,
     });
 
     // Redirect to home
@@ -428,10 +426,10 @@ class UserController extends Controller {
    * @title Register
    * @route {get} /register
    */
-  registerAction (req, res) {
+  registerAction(req, res) {
     // Render registration page
     res.render('register', {
-      'redirect' : req.query.redirect || false
+      redirect : req.query.redirect || false,
     });
   }
 
@@ -446,9 +444,9 @@ class UserController extends Controller {
    * @title Register
    * @route {post} /register
    */
-  async registerSubmitAction (req, res) {
+  async registerSubmitAction(req, res) {
     // Create user
-    let user = new User();
+    const user = new User();
 
     // Check username
     if (req.body.username.trim().length < 5) {
@@ -457,27 +455,27 @@ class UserController extends Controller {
 
       // Render registration page
       return res.render('register', {
-        'old'      : req.body,
-        'redirect' : req.query.redirect || req.body.redirect || false
+        old      : req.body,
+        redirect : req.query.redirect || req.body.redirect || false,
       });
     }
 
     // Check email
     if (req.body.email && req.body.email.length) {
       // Check email
-      let email = await User.findOne({
-        'email' : new RegExp(['^', escapeRegex(req.body.email), '$'].join(''), 'i')
+      const email = await User.findOne({
+        email : new RegExp(['^', escapeRegex(req.body.email), '$'].join(''), 'i'),
       });
 
       // If Email
       if (email) {
         // Send alert
-        req.alert('error', 'the email "' + req.body.email + '" is already taken');
+        req.alert('error', `the email "${req.body.email}" is already taken`);
 
         // Render registration page
         return res.render('register', {
-          'old'      : req.body,
-          'redirect' : req.query.redirect || req.body.redirect || false
+          old      : req.body,
+          redirect : req.query.redirect || req.body.redirect || false,
         });
       }
 
@@ -486,19 +484,19 @@ class UserController extends Controller {
     }
 
     // Check for user
-    let username = await User.findOne({
-      'username' : new RegExp(['^', escapeRegex(req.body.username), '$'].join(''), 'i')
+    const username = await User.findOne({
+      username : new RegExp(['^', escapeRegex(req.body.username), '$'].join(''), 'i'),
     });
 
     // Check if user exists
     if (username) {
       // Send alert
-      req.alert('error', 'the username "' + req.body.username + '" is already taken');
+      req.alert('error', `the username "${req.body.username}" is already taken`);
 
       // Render registration page
       return res.render('register', {
-        'old'      : req.body,
-        'redirect' : req.query.redirect || req.body.redirect || false
+        old      : req.body,
+        redirect : req.query.redirect || req.body.redirect || false,
       });
     }
 
@@ -512,8 +510,8 @@ class UserController extends Controller {
 
       // Render registration page
       return res.render('register', {
-        'old'      : req.body,
-        'redirect' : req.query.redirect || req.body.redirect || false
+        old      : req.body,
+        redirect : req.query.redirect || req.body.redirect || false,
       });
     }
 
@@ -524,13 +522,13 @@ class UserController extends Controller {
 
       // Render registration page
       return res.render('register', {
-        'old'      : req.body,
-        'redirect' : req.query.redirect || req.body.redirect || false
+        old      : req.body,
+        redirect : req.query.redirect || req.body.redirect || false,
       });
     }
 
     // Everything checks out
-    let hash = crypto.createHmac('sha256', config.get('secret'))
+    const hash = crypto.createHmac('sha256', config.get('secret'))
       .update(req.body.password)
       .digest('hex');
 
@@ -542,8 +540,8 @@ class UserController extends Controller {
 
     // Hook user login
     await this.eden.hook('user.register', {
-      'req'  : req,
-      'user' : user
+      req,
+      user,
     }, async (obj) => {
       // Check error
       if (obj.error) {
@@ -552,8 +550,8 @@ class UserController extends Controller {
 
         // Render
         return res.render('register', {
-          'old'      : req.body,
-          'redirect' : req.query.redirect || req.body.redirect || false
+          old      : req.body,
+          redirect : req.query.redirect || req.body.redirect || false,
         });
       }
 
@@ -562,24 +560,26 @@ class UserController extends Controller {
     });
 
     // Log user in
-    if (!prevented) req.login(user, async () => {
+    if (!prevented) {
+      req.login(user, async () => {
       // Send alert
-      await req.alert('success', 'You are now successfully registered', {
-        'save' : true
+        await req.alert('success', 'You are now successfully registered', {
+          save : true,
+        });
+
+        // Hook user login
+        await this.eden.emit('user.login', {
+          req,
+          user,
+        });
+
+        // Emit to socket
+        socket.session(req.sessionID, 'user', await user.sanitise());
+
+        // Redirect to home
+        res.redirect(req.query.redirect || req.body.redirect || '/');
       });
-
-      // Hook user login
-      await this.eden.emit('user.login', {
-        'req'  : req,
-        'user' : user
-      });
-
-      // Emit to socket
-      socket.session(req.sessionID, 'user', await user.sanitise());
-
-      // Redirect to home
-      res.redirect(req.query.redirect || req.body.redirect || '/');
-    });
+    }
   }
 
   /**
@@ -589,9 +589,9 @@ class UserController extends Controller {
    * @param {Response} res
    * @param {Function} next
    */
-  async _user (req, res, next) {
+  async _user(req, res, next) {
     // Set user locally
-    res.locals.acl  = await AclHelper.list(req.user);
+    res.locals.acl = await AclHelper.list(req.user);
     res.locals.user = req.user ? await req.user.sanitise() : false;
 
     // Run next
@@ -601,7 +601,7 @@ class UserController extends Controller {
   /**
    * Checks acl exists
    */
-  async _acl () {
+  async _acl() {
     // Create test array
     let acls = (config.get('acl.default') || []).slice(0);
 
@@ -614,14 +614,14 @@ class UserController extends Controller {
     // Check acls
     for (let i = 0; i < acls.length; i++) {
       // Load acl
-      let check = await Acl.count({
-        'name' : acls[i].name
+      const check = await Acl.count({
+        name : acls[i].name,
       });
 
       // Creat if not exists
       if (!check) {
         // Set create
-        let create = new Acl(acls[i]);
+        const create = new Acl(acls[i]);
 
         // Save
         await create.save();
@@ -634,14 +634,14 @@ class UserController extends Controller {
    *
    * @param {Object} obj
    */
-  async _login (obj) {
+  async _login(obj) {
     // Add to login
-    let login = new Login({
-      'ip'      : obj.req ? obj.req.headers['x-forwarded-for'] || obj.req.connection.remoteAddress.replace(/^.*:/, '') : false,
-      'way'     : 'login',
-      'fail'    : !!obj.fail,
-      'user'    : obj.user,
-      'message' : obj.message
+    const login = new Login({
+      ip      : obj.req ? obj.req.headers['x-forwarded-for'] || obj.req.connection.remoteAddress.replace(/^.*:/, '') : false,
+      way     : 'login',
+      fail    : !!obj.fail,
+      user    : obj.user,
+      message : obj.message,
     });
 
     // Save login
@@ -653,17 +653,17 @@ class UserController extends Controller {
    *
    * @param {Object} obj
    */
-  async _register (obj) {
+  async _register(obj) {
     // Load user
     let def  = (config.get('acl.default') || []).slice(0);
-    let acls = [];
-    let user = obj.user;
+    const acls = [];
+    const user = obj.user;
 
     // Set as array
     if (!Array.isArray(def)) def = [def];
 
     // Check acls
-    let count = await User.count();
+    const count = await User.count();
 
     // Add admin roles
     if (count === 0) {
@@ -673,8 +673,8 @@ class UserController extends Controller {
     // Load acls
     for (let i = 0; i < def.length; i++) {
       // Load acl
-      let check = await Acl.findOne({
-        'name' : def[i].name
+      const check = await Acl.findOne({
+        name : def[i].name,
       });
 
       // Check check
@@ -690,14 +690,14 @@ class UserController extends Controller {
    *
    * @param {Object} obj
    */
-  async _logout (obj) {
+  async _logout(obj) {
     // Add to login
-    let login = new Login({
-      'ip'      : obj.req ? obj.req.headers['x-forwarded-for'] || obj.req.connection.remoteAddress : false,
-      'way'     : 'logout',
-      'fail'    : false,
-      'user'    : obj.user,
-      'message' : false
+    const login = new Login({
+      ip      : obj.req ? obj.req.headers['x-forwarded-for'] || obj.req.connection.remoteAddress : false,
+      way     : 'logout',
+      fail    : false,
+      user    : obj.user,
+      message : false,
     });
 
     // Save login
@@ -713,28 +713,28 @@ class UserController extends Controller {
    *
    * @returns {*}
    */
-  async _authenticate (username, password, done) {
+  async _authenticate(username, password, done) {
     // Find user
-    let user = await User.match('username', new RegExp(['^', escapeRegex(username), '$'].join(''), 'i')).findOne() ||
-               await User.match('email', new RegExp(['^', escapeRegex(username), '$'].join(''), 'i')).findOne();
+    const user = await User.match('username', new RegExp(['^', escapeRegex(username), '$'].join(''), 'i')).findOne()
+               || await User.match('email', new RegExp(['^', escapeRegex(username), '$'].join(''), 'i')).findOne();
 
     // Check user exists
     if (!user) {
       // Return done
       return done(null, false, {
-        'user'    : false,
-        'message' : 'User not found'
+        user    : false,
+        message : 'User not found',
       });
     }
 
     // Authenticate
-    let result = await user.authenticate(password);
+    const result = await user.authenticate(password);
 
     // Check error
     if (result !== true) {
       return done(null, false, {
-        'user'    : user,
-        'message' : result.info
+        user,
+        message : result.info,
       });
     }
 
@@ -748,9 +748,9 @@ class UserController extends Controller {
    * @param {String} id
    * @param {Function} done
    */
-  async _deserialise (id, done) {
+  async _deserialise(id, done) {
     // Find user by id
-    let user = await User.findById(id);
+    const user = await User.findById(id);
 
     // Callback done with user
     done(null, user);

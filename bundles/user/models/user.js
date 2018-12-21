@@ -9,11 +9,10 @@ const socket = require('socket');
  * Create user model class
  */
 class User extends Model {
-
   /**
    * Construct user model class
    */
-  constructor () {
+  constructor() {
     // Run super
     super(...arguments);
 
@@ -21,9 +20,9 @@ class User extends Model {
     this.authenticate = this.authenticate.bind(this);
 
     // Bind socket methods
-    this.emit     = this.emit.bind(this);
-    this.name     = this.name.bind(this);
-    this.alert    = this.alert.bind(this);
+    this.emit = this.emit.bind(this);
+    this.name = this.name.bind(this);
+    this.alert = this.alert.bind(this);
     this.sanitise = this.sanitise.bind(this);
   }
 
@@ -34,10 +33,10 @@ class User extends Model {
    *
    * @returns {Promise}
    */
-  async authenticate (password) {
+  async authenticate(password) {
     // Compare hash with password
-    let hash  = this.get('hash');
-    let check = crypto
+    const hash  = this.get('hash');
+    const check = crypto
       .createHmac('sha256', config.get('secret'))
       .update(password)
       .digest('hex');
@@ -45,8 +44,8 @@ class User extends Model {
     // Check if password correct
     if (check !== hash) {
       return {
-        'info'  : 'Incorrect password',
-        'error' : true
+        info  : 'Incorrect password',
+        error : true,
       };
     }
 
@@ -59,9 +58,9 @@ class User extends Model {
    *
    * @return {String} name
    */
-  name () {
+  name() {
     // Check name
-    let name = (this.get('first') || '') + ' ' + (this.get('last') || '');
+    const name = `${this.get('first') || ''} ${this.get('last') || ''}`;
 
     // Return name
     return (name === ' ' ? (this.get('email') || this.get('username')) : name).trim();
@@ -75,7 +74,7 @@ class User extends Model {
    *
    * @return {*}
    */
-  emit (type, data) {
+  emit(type, data) {
     // Return socket emission
     return socket.user(this, type, data);
   }
@@ -89,7 +88,7 @@ class User extends Model {
    *
    * @return {*}
    */
-  alert (message, type, options) {
+  alert(message, type, options) {
     // Return socket emission
     return socket.alert(this, message, type, options);
   }
@@ -99,7 +98,7 @@ class User extends Model {
    *
    * @return {*}
    */
-  async sanitise () {
+  async sanitise() {
     // Check arguments
     if (arguments && arguments.length) {
       // Return sanitised with arguments
@@ -108,19 +107,19 @@ class User extends Model {
 
     // Return sanitised with default
     return await super.__sanitiseModel('email', 'username', {
-      'field'          : '_id',
-      'sanitisedField' : 'id',
-      'default'        : false
+      field          : '_id',
+      sanitisedField : 'id',
+      default        : false,
     }, {
-      'field'          : 'acl',
-      'sanitisedField' : 'acls',
-      'default'        : []
+      field          : 'acl',
+      sanitisedField : 'acls',
+      default        : [],
     }, {
-      'field'   : 'avatar',
-      'default' : false
+      field   : 'avatar',
+      default : false,
     }, {
-      'field'   : 'balance',
-      'default' : 0
+      field   : 'balance',
+      default : 0,
     });
   }
 }

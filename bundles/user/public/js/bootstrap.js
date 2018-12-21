@@ -13,11 +13,10 @@ const socket = require('socket/public/js/bootstrap');
  * Build alert class
  */
 class EdenUser extends Events {
-
   /**
    * Construct edenAlert class
    */
-  constructor () {
+  constructor() {
     // Run super
     super(...arguments);
 
@@ -31,10 +30,10 @@ class EdenUser extends Events {
     this.acl = acl;
 
     // Bind methods
-    this.get     = this.get.bind(this);
-    this.set     = this.set.bind(this);
-    this.build   = this.build.bind(this);
-    this.exists  = this.exists.bind(this);
+    this.get = this.get.bind(this);
+    this.set = this.set.bind(this);
+    this.build = this.build.bind(this);
+    this.exists = this.exists.bind(this);
     this.refresh = this.refresh.bind(this);
 
     // Bind private methods
@@ -51,7 +50,7 @@ class EdenUser extends Events {
    *
    * @returns {*}
    */
-  get (key) {
+  get(key) {
     // Check key
     if (!key) return this._user;
 
@@ -65,12 +64,12 @@ class EdenUser extends Events {
    * @param {String} key
    * @param {*}      value
    */
-  set (key, value) {
+  set(key, value) {
     // Check values
     if (['acl'].includes(key)) return;
 
     // Set key/value
-    this[key]       = value;
+    this[key] = value;
     this._user[key] = value;
 
     // Check in fields
@@ -83,15 +82,15 @@ class EdenUser extends Events {
   /**
    * Builds user
    */
-  build () {
+  build() {
     // Set values
-    let User = store.get('user');
+    const User = store.get('user');
 
     // Set user
     this._user = User;
 
     // Check user
-    for (let key in User) {
+    for (const key in User) {
       // Set value
       this[key] = User[key];
 
@@ -118,7 +117,7 @@ class EdenUser extends Events {
   /**
    * Refresh user
    */
-  async refresh () {
+  async refresh() {
     // Refresh
     this._event(await socket.call('user.refresh'));
   }
@@ -126,7 +125,7 @@ class EdenUser extends Events {
   /**
    * Clears user
    */
-  clear () {
+  clear() {
     // Loop fields
     this.fields.forEach((field) => {
       // Delete key
@@ -142,7 +141,7 @@ class EdenUser extends Events {
    *
    * @return {Boolean}
    */
-  exists () {
+  exists() {
     // Return this.id
     return !!this.id;
   }
@@ -154,7 +153,7 @@ class EdenUser extends Events {
    *
    * @returns {*}
    */
-  _event (User) {
+  _event(User) {
     // Set built
     store.user = built;
 
@@ -165,7 +164,7 @@ class EdenUser extends Events {
     if (!User) return this.clear();
 
     // Emit stuff
-    for (let key in User) {
+    for (const key in User) {
       // Set value
       if (this[key] !== User[key]) {
         // Set value
