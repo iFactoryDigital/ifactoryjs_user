@@ -317,7 +317,7 @@ class UserController extends Controller {
     user.set('hash', hash);
 
     // Save user
-    await user.save();
+    await user.save(req.user);
 
     // Send alert
     req.alert('success', 'Successfully updated your password');
@@ -366,7 +366,7 @@ class UserController extends Controller {
     user.set('token', crypto.randomBytes(Math.ceil(24 / 2)).toString('hex').slice(0, 24));
 
     // Save user
-    await user.save();
+    await user.save(req.user);
 
     // Alert
     req.alert('success', 'An email has been sent with your password reset token');
@@ -378,7 +378,7 @@ class UserController extends Controller {
     });
 
     // Return redirect
-    return res.redirect('/');
+    return res.redirect('/forgot');
   }
 
   /**
@@ -556,7 +556,7 @@ class UserController extends Controller {
       }
 
       // Save user
-      await user.save();
+      await user.save(req.user);
     });
 
     // Log user in
@@ -624,7 +624,7 @@ class UserController extends Controller {
         const create = new Acl(acls[i]);
 
         // Save
-        await create.save();
+        await create.save(null);
       }
     }
   }
@@ -645,7 +645,7 @@ class UserController extends Controller {
     });
 
     // Save login
-    await login.save();
+    await login.save(obj.user);
   }
 
   /**
@@ -701,7 +701,7 @@ class UserController extends Controller {
     });
 
     // Save login
-    await login.save();
+    await login.save(obj.user);
   }
 
   /**

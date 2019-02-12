@@ -82,7 +82,7 @@ class AdminUserController extends Controller {
       blockModel.set('state', req.body.data.state);
 
       // save block
-      await blockModel.save();
+      await blockModel.save(req.user);
     });
   }
 
@@ -100,7 +100,7 @@ class AdminUserController extends Controller {
    */
   async indexAction(req, res) {
     // Render user admin page
-    const grid = await this._grid().render(req);
+    const grid = await this._grid(req).render(req);
 
     // Render grid
     res.render('user/admin', {
@@ -259,7 +259,7 @@ class AdminUserController extends Controller {
     }
 
     // Save user
-    await user.save();
+    await user.save(req.user);
 
     // Get acls
     const uacls = (await user.get('acl')).map((acl) => {
@@ -338,7 +338,7 @@ class AdminUserController extends Controller {
     req.alert('success', `Successfully removed ${user.get('username') || user.get('email')}`);
 
     // Delete website
-    await user.remove();
+    await user.remove(req.user);
 
     // Render index
     return this.indexAction(req, res);
@@ -372,7 +372,7 @@ class AdminUserController extends Controller {
    */
   gridAction(req, res) {
     // Return post grid request
-    return this._grid().post(req, res);
+    return this._grid(req).post(req, res);
   }
 
   /**
@@ -380,9 +380,9 @@ class AdminUserController extends Controller {
    *
    * @return {grid}
    */
-  _grid() {
+  _grid(req) {
     // Create new grid
-    const userGrid = new Grid();
+    const userGrid = new Grid(req);
 
     // Set route
     userGrid.route('/admin/user/grid');
@@ -411,7 +411,7 @@ class AdminUserController extends Controller {
         row.set('username', value);
 
         // Save
-        await row.save();
+        await row.save(req.user);
 
         // Unlock
         row.unlock();
@@ -431,7 +431,7 @@ class AdminUserController extends Controller {
         row.set('email', value);
 
         // Save
-        await row.save();
+        await row.save(req.user);
 
         // Unlock
         row.unlock();
@@ -473,7 +473,7 @@ class AdminUserController extends Controller {
           row.set('updated_at', new Date(value));
 
           // Save
-          await row.save();
+          await row.save(req.user);
 
           // Unlock
           row.unlock();
@@ -498,7 +498,7 @@ class AdminUserController extends Controller {
           row.set('created_at', new Date(value));
 
           // Save
-          await row.save();
+          await row.save(req.user);
 
           // Unlock
           row.unlock();
