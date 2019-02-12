@@ -101,12 +101,6 @@ class AdminUserController extends Controller {
     }, async (req, field) => {
       // save field
     }, async (req, field, value, old) => {
-      // set value
-      try {
-        // set value
-        value = JSON.parse(value);
-      } catch (e) {}
-
       // check value
       if (!Array.isArray(value)) value = [value];
 
@@ -116,6 +110,42 @@ class AdminUserController extends Controller {
         try {
           // buffer company
           const acl = await Acl.findById(val);
+
+          // check company
+          if (acl) return acl;
+
+          // return null
+          return null;
+        } catch (e) {
+          // return old
+          return old[i];
+        }
+      }));
+    });
+
+    // register simple field
+    fieldHelper.field('admin.user', {
+      for         : ['frontend', 'admin'],
+      title       : 'User',
+      description : 'User field',
+    }, async (req, field, value) => {
+      // set tag
+      field.tag = 'user';
+      field.value = value ? (Array.isArray(value) ? await Promise.all(value.map(item => item.sanitise())) : await value.sanitise()) : null;
+      // return
+      return field;
+    }, async (req, field) => {
+      // save field
+    }, async (req, field, value, old) => {
+      // check value
+      if (!Array.isArray(value)) value = [value];
+
+      // return value map
+      return await Promise.all((value || []).filter(val => val).map(async (val, i) => {
+        // run try catch
+        try {
+          // buffer company
+          const acl = await User.findById(val);
 
           // check company
           if (acl) return acl;
@@ -159,19 +189,74 @@ class AdminUserController extends Controller {
    * @param req
    * @param res
    *
-   * @acl   admin.user
+   * @acl   admin
    * @fail  next
-   * @call  roles
+   * @route {GET} /query
    */
-  async queryAction(query, opts) {
+  async queryAction(req, res) {
     // find children
-    const roles = await Acl.where({
-      name : new RegExp(escapeRegex(query), 'i'),
-    }).skip(((parseInt(query.page, 10) || 1) - 1) * 20).limit(20).sort('name', 1)
+    let users = await User;
+
+    // set query
+    if (req.query.q) {
+      users = users.or({
+        name : new RegExp(escapeRegex(req.query.q || ''), 'i'),
+      }, {
+        email : new RegExp(escapeRegex(req.query.q || ''), 'i'),
+      }, {
+        username : new RegExp(escapeRegex(req.query.q || ''), 'i'),
+      });
+    }
+
+    // add roles
+    users = await users.skip(((parseInt(req.query.page, 10) || 1) - 1) * 20).limit(20).sort('name', 1)
       .find();
 
     // get children
-    return await Promise.all(roles.map(role => role.sanitise()));
+    res.json((await Promise.all(users.map(user => user.sanitise()))).map((sanitised) => {
+      // return object
+      return {
+        text  : sanitised.name,
+        data  : sanitised,
+        value : sanitised.id,
+      };
+    }));
+  }
+
+  /**
+   * index action
+   *
+   * @param req
+   * @param res
+   *
+   * @acl   admin
+   * @fail  next
+   * @route {GET} /role/query
+   */
+  async queryRoleAction(req, res) {
+    // find children
+    let roles = await Acl;
+
+    // set query
+    if (req.query.q) {
+      roles = roles.where({
+        name : new RegExp(escapeRegex(req.query.q || ''), 'i'),
+      });
+    }
+
+    // add roles
+    roles = await roles.skip(((parseInt(req.query.page, 10) || 1) - 1) * 20).limit(20).sort('name', 1)
+      .find();
+
+    // get children
+    res.json((await Promise.all(roles.map(role => role.sanitise()))).map((sanitised) => {
+      // return object
+      return {
+        text  : sanitised.name,
+        data  : sanitised,
+        value : sanitised.id,
+      };
+    }));
   }
 
   /**

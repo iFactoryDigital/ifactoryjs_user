@@ -1,4 +1,4 @@
-<field-role>
+<field-user>
   <field ref="field" is-input={ true } class="field-container-inner" on-container-class={ onFieldClass } is-multiple={ true } get-fields={ getFields } get-element={ getElement }>
     <yield to="body">
       <div class={ opts.field.group || 'form-group' }>
@@ -6,9 +6,9 @@
           { opts.field.label }
           <i if={ !opts.field.label }>Set Label</i>
         </label>
-        <eden-select url="/admin/user/role/query" required={ opts.field.required } name={ opts.field.uuid } multiple={ opts.field.multiple } ref="select" label={ opts.field.label || 'Search by Name' } data={ opts.data }>
-          <option each={ role, i in opts.data.value || [] } selected="true" value={ role.id }>
-            { role.name }
+        <eden-select url="/admin/user/query" required={ opts.field.required } name={ opts.field.uuid } multiple={ opts.field.multiple } ref="select" label={ opts.field.label || 'Search by Name' } data={ opts.data }>
+          <option each={ user, i in opts.data.value || [] } selected="true" value={ user.id }>
+            { user.name || user.email || user.email }
           </option>
         </eden-select>
       </div>
@@ -32,4 +32,4 @@
     });
     
   </script>
-</field-role>
+</field-user>
