@@ -13,7 +13,9 @@ const User  = model('user');
 const Block = model('block');
 
 // require helpers
-const BlockHelper = helper('cms/block');
+const formHelper  = helper('form');
+const fieldHelper = helper('form/field');
+const blockHelper = helper('cms/block');
 
 /**
  * Build user admin controller
@@ -44,7 +46,7 @@ class AdminUserController extends Controller {
     this._grid = this._grid.bind(this);
 
     // register simple block
-    BlockHelper.block('dashboard.user.users', {
+    blockHelper.block('dashboard.user.users', {
       acl         : ['admin.user'],
       for         : ['admin'],
       title       : 'Users Grid',
@@ -84,6 +86,48 @@ class AdminUserController extends Controller {
       // save block
       await blockModel.save(req.user);
     });
+
+    // register simple field
+    fieldHelper.field('admin.role', {
+      for         : ['frontend', 'admin'],
+      title       : 'Role',
+      description : 'Role field',
+    }, async (req, field, value) => {
+      // set tag
+      field.tag = 'role';
+      field.value = value ? (Array.isArray(value) ? await Promise.all(value.map(item => item.sanitise())) : await value.sanitise()) : null;
+      // return
+      return field;
+    }, async (req, field) => {
+      // save field
+    }, async (req, field, value, old) => {
+      // set value
+      try {
+        // set value
+        value = JSON.parse(value);
+      } catch (e) {}
+
+      // check value
+      if (!Array.isArray(value)) value = [value];
+
+      // return value map
+      return await Promise.all((value || []).filter(val => val).map(async (val, i) => {
+        // run try catch
+        try {
+          // buffer company
+          const acl = await Acl.findById(val);
+
+          // check company
+          if (acl) return acl;
+
+          // return null
+          return null;
+        } catch (e) {
+          // return old
+          return old[i];
+        }
+      }));
+    });
   }
 
   /**
@@ -96,6 +140,7 @@ class AdminUserController extends Controller {
    * @menu    {ADMIN} Users
    * @title   User Administration
    * @route   {get} /
+   * @parent  /admin/config
    * @layout  admin
    */
   async indexAction(req, res) {
@@ -106,6 +151,27 @@ class AdminUserController extends Controller {
     res.render('user/admin', {
       grid,
     });
+  }
+
+  /**
+   * index action
+   *
+   * @param req
+   * @param res
+   *
+   * @acl   admin.user
+   * @fail  next
+   * @call  roles
+   */
+  async queryAction(query, opts) {
+    // find children
+    const roles = await Acl.where({
+      name : new RegExp(escapeRegex(query), 'i'),
+    }).skip(((parseInt(query.page, 10) || 1) - 1) * 20).limit(20).sort('name', 1)
+      .find();
+
+    // get children
+    return await Promise.all(roles.map(role => role.sanitise()));
   }
 
   /**
@@ -147,27 +213,37 @@ class AdminUserController extends Controller {
       create = false;
     }
 
-    // Get acls
-    const uacls = (await user.get('acl') || []).map((acl) => {
-      // Return id
-      return acl.get('_id').toString();
-    });
+    // get form
+    const form = await formHelper.get('edenjs.user');
 
-    // Set acls
-    const acls = (await Acl.find() || []).map((acl) => {
-      // Return sanitised
+    // digest into form
+    const sanitised = await formHelper.render(req, form, await Promise.all(form.get('fields').map(async (field) => {
+      // return fields map
       return {
-        id   : acl.get('_id').toString(),
-        has  : uacls.includes(acl.get('_id').toString()),
-        name : acl.get('name'),
+        uuid  : field.uuid,
+        value : await user.get(field.name || field.uuid),
       };
-    });
+    })));
+
+    // get form
+    if (!form.get('_id')) res.form('edenjs.user');
 
     // Render page
     res.render('user/admin/update', {
-      usr   : await user.sanitise(),
-      acls,
-      title : create ? 'Create New' : `Update ${user.get('username') || user.get('email')}`,
+      item   : await user.sanitise(),
+      form   : sanitised,
+      title  : create ? 'Create New' : `Update ${user.get('username') || user.get('email')}`,
+      fields : config.get('user.fields').map((field) => {
+        // clone field
+        field = JSON.parse(JSON.stringify(field));
+
+        // delete field stuff
+        delete field.format;
+        delete field.filter;
+
+        // return field
+        return field;
+      }),
     });
   }
 
@@ -211,11 +287,12 @@ class AdminUserController extends Controller {
    *
    * @param {Request}  req
    * @param {Response} res
+   * @param {Function} next
    *
    * @route   {post} /:id/update
    * @layout  admin
    */
-  async updateSubmitAction(req, res) {
+  async updateSubmitAction(req, res, next) {
     // Set website variable
     let user   = new User();
     let create = true;
@@ -227,65 +304,35 @@ class AdminUserController extends Controller {
       create = false;
     }
 
-    // Get user acls
-    let UAcls = await user.get('acl');
+    // get form
+    const form = await formHelper.get('edenjs.user');
 
-    // Loop acls
-    if (req.body.roles && req.body.roles.length) {
-      // Check if Array
-      if (!Array.isArray(req.body.roles)) req.body.roles = [req.body.roles];
-
-      // Loop roles
-      UAcls = await Promise.all(req.body.roles.map((role) => {
-        // Return found role
-        return Acl.findById(role);
-      }));
-    }
-
-    // Set User model variables
-    user.set('acl', UAcls);
-    user.set('email', req.body.email);
-    user.set('username', req.body.username);
-
-    // Check for user password
-    if (req.body.password && req.body.password.length) {
-      // Everything checks out
-      const hash = crypto.createHmac('sha256', config.get('secret'))
-        .update(req.body.password)
-        .digest('hex');
-
-      // Set hash
-      user.set('hash', hash);
-    }
-
-    // Save user
-    await user.save(req.user);
-
-    // Get acls
-    const uacls = (await user.get('acl')).map((acl) => {
-      // Return id
-      return acl.get('_id').toString();
-    });
-
-    // Set acls
-    const acls = (await Acl.find()).map((acl) => {
-      // Return sanitised
+    // digest into form
+    const fields = await formHelper.submit(req, form, await Promise.all(form.get('fields').map(async (field) => {
+      // return fields map
       return {
-        id   : acl.get('_id').toString(),
-        has  : uacls.includes(acl.get('_id').toString()),
-        name : acl.get('name'),
+        uuid  : field.uuid,
+        value : await user.get(field.name || field.uuid),
       };
-    });
+    })));
+
+    // loop fields
+    for (const field of fields) {
+      // set value
+      user.set(field.name || field.uuid, field.value);
+    }
 
     // Update user
-    req.alert('success', 'Successfully updated user');
+    req.alert('success', `Successfully ${create ? 'created' : 'updated'} user`);
+
+    // Save audit
+    await user.save(req.user);
+
+    // get user
+    req.params.id = user.get('_id').toString();
 
     // Render page
-    res.render('user/admin/update', {
-      usr   : await user.sanitise(),
-      acls,
-      title : create ? 'Create New' : `Update ${user.get('username') || user.get('email')}`,
-    });
+    return this.updateAction(req, res, next);
   }
 
   /**
@@ -309,7 +356,7 @@ class AdminUserController extends Controller {
 
     // Render page
     res.render('user/admin/remove', {
-      usr   : await user.sanitise(),
+      item  : await user.sanitise(),
       title : `Remove ${user.get('username') || user.get('email')}`,
     });
   }
