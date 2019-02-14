@@ -162,6 +162,7 @@ class EdenUser extends Events {
    * @param  {Object} User
    */
   __update(user) {
+    console.log('update user', user);
     // Set built
     store.user = built;
 
