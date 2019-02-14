@@ -99,28 +99,33 @@ class User extends Model {
    * @return {*}
    */
   async sanitise() {
-    // Check arguments
-    if (arguments && arguments.length) {
-      // Return sanitised with arguments
-      return await super.__sanitiseModel(...arguments);
+    // return object
+    const sanitised = {
+      id         : this.get('_id') ? this.get('_id').toString() : null,
+      _id        : this.get('_id') ? this.get('_id').toString() : null,
+      created_at : this.get('created_at'),
+      updated_at : this.get('updated_at'),
+    };
+
+    // add other fields
+    for (const field of config.get('user.fields')) {
+      // set sanitised
+      sanitised[field.name] = await this.get(field.name);
+      sanitised[field.name] = sanitised[field.name] && sanitised[field.name].sanitise ? await sanitised[field.name].sanitise() : sanitised[field.name];
+      sanitised[field.name] = Array.isArray(sanitised[field.name]) ? await Promise.all(sanitised[field.name].map((val) => {
+        // return sanitised value
+        if (val.sanitise) return val.sanitise();
+      })) : sanitised[field.name];
     }
 
-    // Return sanitised with default
-    return await super.__sanitiseModel('email', 'username', {
-      field          : '_id',
-      sanitisedField : 'id',
-      default        : false,
-    }, {
-      field          : 'acl',
-      sanitisedField : 'acls',
-      default        : [],
-    }, {
-      field   : 'avatar',
-      default : false,
-    }, {
-      field   : 'balance',
-      default : 0,
+    // await hook
+    await this.eden.hook('user.sanitise', {
+      sanitised,
+      user : this,
     });
+
+    // return sanitised
+    return sanitised;
   }
 }
 

@@ -7,7 +7,7 @@ const store = require('default/public/js/store');
 /**
  * Build acl class
  */
-class AclUtility {
+class AclStore {
   /**
    * Construct acl class
    */
@@ -27,7 +27,7 @@ class AclUtility {
    */
   validate(tests, list) {
     // Get list
-    let obj  = {};
+    let obj = {};
     const user = store.user || store.get('user');
 
     // Set list
@@ -69,29 +69,25 @@ class AclUtility {
     const user = store.user || store.get('user');
 
     // Return array if no user
-    if (!user || !user.id) return [];
+    if (!user || !(typeof user.get === 'function' ? user.get('_id') : user._id)) return [];
 
     // Get groups
-    const acls = [];
-    const Acls = user.acls || [];
+    const userAcls = (typeof user.get === 'function' ? user.get('acl') : user.acl) || [];
 
     // Loop Acls
-    for (let a = 0; a < Acls.length; a++) {
-      // Check acl index
-      if (Acls[a].value === true) return true;
+    if (userAcls.find(val => val.value === true)) return true;
 
-      // Loop values
-      for (let b = 0; b < Acls[a].value.length; b++) {
-        // Check if already in Array
-        if (!acls.includes(Acls[a].value)) {
-          // Push into acls
-          acls.push(Acls[a].value[b]);
-        }
-      }
-    }
+    // reduce to list
+    return userAcls.reduce((accum, acl) => {
+      // loop values
+      acl.value.forEach((val) => {
+        // push value
+        if (!accum.includes(val)) accum.push(val);
+      });
 
-    // Return acls
-    return acls;
+      // return accumulated
+      return accum;
+    }, []);
   }
 }
 
@@ -100,4 +96,4 @@ class AclUtility {
  *
  * @type {acl}
  */
-exports = module.exports = new AclUtility();
+exports = module.exports = new AclStore();

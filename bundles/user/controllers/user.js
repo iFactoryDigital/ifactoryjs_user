@@ -11,13 +11,13 @@ const escapeRegex = require('escape-string-regexp');
 // Require models
 const Acl   = model('acl');
 const User  = model('user');
-const Block = model('block');
 const Login = model('login');
 
 // Require local dependencies
-const AclHelper   = helper('user/acl');
-const EmailHelper = helper('email');
-const BlockHelper = helper('cms/block');
+const aclHelper   = helper('user/acl');
+const modelHelper = helper('model');
+const emailHelper = helper('email');
+const blockHelper = helper('cms/block');
 
 /**
  * Create user controller
@@ -106,7 +106,7 @@ class UserController extends Controller {
       const upper = b.charAt(0).toUpperCase() + b.slice(1);
 
       // register simple block
-      BlockHelper.block(`user.${b}`, {
+      blockHelper.block(`user.${b}`, {
         acl         : false,
         for         : ['frontend'],
         title       : `${upper} Form`,
@@ -136,6 +136,46 @@ class UserController extends Controller {
       return await opts.user.sanitise();
     }
     return null;
+  }
+
+  /**
+   * socket listen action
+   *
+   * @param  {String} id
+   * @param  {Object} opts
+   *
+   * @call   model.listen.user
+   * @return {Async}
+   */
+  async listenAction(id, uuid, opts) {
+    // / return if no id
+    if (!id) return;
+
+    // join room
+    opts.socket.join(`user.${id}`);
+
+    // add to room
+    return await modelHelper.listen(opts.sessionID, await User.findById(id), uuid, true);
+  }
+
+  /**
+   * socket deafen action
+   *
+   * @param  {String} id
+   * @param  {Object} opts
+   *
+   * @call   model.deafen.user
+   * @return {Async}
+   */
+  async deafenAction(id, uuid, opts) {
+    // / return if no id
+    if (!id) return;
+
+    // join room
+    opts.socket.leave(`user.${id}`);
+
+    // add to room
+    return await modelHelper.deafen(opts.sessionID, await User.findById(id), uuid);
   }
 
   /**
@@ -372,7 +412,7 @@ class UserController extends Controller {
     req.alert('success', 'An email has been sent with your password reset token');
 
     // Send email
-    EmailHelper.send(user.get('email') || user.get('username'), 'forgot', {
+    emailHelper.send(user.get('email') || user.get('username'), 'forgot', {
       token   : user.get('token'),
       subject : `${config.get('domain')} - forgot password`,
     });
@@ -591,7 +631,7 @@ class UserController extends Controller {
    */
   async _user(req, res, next) {
     // Set user locally
-    res.locals.acl = await AclHelper.list(req.user);
+    res.locals.acl = await aclHelper.list(req.user);
     res.locals.user = req.user ? await req.user.sanitise() : false;
 
     // Run next

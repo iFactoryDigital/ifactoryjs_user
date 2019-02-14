@@ -1,10 +1,10 @@
 // Require dependencies
-const dotProp = require('dot-prop-immutable');
+const dotProp = require('dot-prop');
 
 /**
  * Build acl class
  */
-class aclHelper {
+class AclHelper {
   /**
    * Construct acl class
    */
@@ -20,26 +20,26 @@ class aclHelper {
    *
    * this method will return false if the user does not have access to a certain
    * acl list, to check an acl against a user simply:
-   *   await aclHelper.validate (User, ['user.view', 'user.create'])
+   *   await AclHelper.validate (User, ['user.view', 'user.create'])
    *    OR
-   *   await aclHelper.validate (User, 'user.view')
+   *   await AclHelper.validate (User, 'user.view')
    *
-   * @param {user}    User
+   * @param {User}    user
    * @param {*|Array} tests
    *
    * @return {Promise}
    */
-  async validate(User, tests) {
+  async validate(user, tests) {
     // Get list
-    let obj  = {};
-    const list = await this.list(User);
+    const obj = {};
+    const list = await this.list(user);
 
     // Check is array
     if (Array.isArray(list)) {
       // Set list
       for (const item of list) {
         // Set value
-        obj = dotProp.set(obj, item, true);
+        dotProp.set(obj, item, true);
       }
     }
 
@@ -49,8 +49,8 @@ class aclHelper {
     // Find failed test
     return !(tests.filter((test) => {
       // Check if true/false
-      if (test.toString() === 'true' && !User) return true;
-      if (test.toString() === 'false' && User) return true;
+      if (test.toString() === 'true' && !user) return true;
+      if (test.toString() === 'false' && user) return true;
 
       // Check list
       if (list === true) return false;
@@ -65,45 +65,36 @@ class aclHelper {
    *
    * this method will return an array of group acls associated with a particular
    * user, to use this method simply:
-   *    await aclHelper.list (User)
+   *    await AclHelper.list (user)
    *
    * if this method returns `true` this means the user is a super administrator
    *
-   * @param {user} User
+   * @param {User} user
    *
    * @return {Array|Boolean}
    * @private
    */
-  async list(User) {
+  async list(user) {
     // Return array if no user
-    if (!User) return [];
+    if (!user) return [];
 
     // Get groups
-    const acls = [];
-    const Acls = await User.get('acl') || [];
+    const acls = (await user.get('acl') || []).filter(acl => acl && acl.get);
 
-    // Loop Acls
-    for (let a = 0; a < Acls.length; a++) {
-      // Check if get
-      if (!Acls[a] || !Acls[a].get) {
-        continue;
-      }
+    // check value
+    if (acls.find(acl => acl.get('value') === true)) return true;
 
-      // Check acl index
-      if (Acls[a].get('value') === true) return true;
+    // reduce
+    return acls.reduce((accum, acl) => {
+      // reduce values
+      acl.get('value').forEach((val) => {
+        // push value if not exists
+        if (!accum.includes(val)) accum.push(val);
+      });
 
-      // Loop values
-      for (let b = 0; b < Acls[a].get('value').length; b++) {
-        // Check if already in Array
-        if (!acls.includes(Acls[a].get('value')[b])) {
-          // Push into acls
-          acls.push(Acls[a].get('value')[b]);
-        }
-      }
-    }
-
-    // Return acls
-    return acls;
+      // return accum
+      return accum;
+    }, []);
   }
 
   /**
@@ -158,8 +149,8 @@ class aclHelper {
 }
 
 /**
- * Export aclHelper class
+ * Export AclHelper class
  *
- * @type {aclHelper}
+ * @type {AclHelper}
  */
-exports = module.exports = new aclHelper();
+exports = module.exports = new AclHelper();

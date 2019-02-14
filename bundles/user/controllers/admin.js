@@ -32,6 +32,9 @@ class AdminUserController extends Controller {
     // Run super
     super();
 
+    // bind build method
+    this.build = this.build.bind(this);
+
     // Bind methods
     this.gridAction = this.gridAction.bind(this);
     this.indexAction = this.indexAction.bind(this);
@@ -44,6 +47,18 @@ class AdminUserController extends Controller {
 
     // Bind private methods
     this._grid = this._grid.bind(this);
+
+    // build
+    this.building = this.build();
+  }
+
+  /**
+   * builds edenjs user
+   */
+  build() {
+    //
+    // BLOCKS
+    //
 
     // register simple block
     blockHelper.block('dashboard.user.users', {
@@ -86,6 +101,10 @@ class AdminUserController extends Controller {
       // save block
       await blockModel.save(req.user);
     });
+
+    //
+    // FIELS
+    //
 
     // register simple field
     fieldHelper.field('admin.role', {
@@ -174,12 +193,9 @@ class AdminUserController extends Controller {
    * @layout  admin
    */
   async indexAction(req, res) {
-    // Render user admin page
-    const grid = await this._grid(req).render(req);
-
     // Render grid
     res.render('user/admin', {
-      grid,
+      grid : await (await this._grid(req)).render(req),
     });
   }
 
@@ -502,9 +518,9 @@ class AdminUserController extends Controller {
    *
    * @returns {Promise}
    */
-  gridAction(req, res) {
+  async gridAction(req, res) {
     // Return post grid request
-    return this._grid(req).post(req, res);
+    return (await this._grid(req)).post(req, res);
   }
 
   /**
@@ -512,169 +528,74 @@ class AdminUserController extends Controller {
    *
    * @return {grid}
    */
-  _grid(req) {
+  async _grid(req) {
     // Create new grid
-    const userGrid = new Grid(req);
+    const userGrid = new Grid();
 
     // Set route
     userGrid.route('/admin/user/grid');
 
+    // get form
+    const form = await formHelper.get('edenjs.user');
+
     // Set grid model
     userGrid.model(User);
+    userGrid.models(true);
+    userGrid.include({
+      form : await form.sanitise(),
+    });
 
     // Add grid columns
     userGrid.column('_id', {
-      title  : 'ID',
-      width  : '1%',
-      format : (col) => {
-        return col ? `<a href="/admin/user/${col.toString()}/update">${col.toString()}</a>` : '<i>N/A</i>';
-      },
-    }).column('username', {
-      sort   : true,
-      title  : 'Username',
-      format : (col) => {
-        return col ? col.toString() : '<i>N/A</i>';
-      },
-      update : async (row, value) => {
-        // Set value
-        await row.lock();
+      sort     : true,
+      title    : 'Id',
+      priority : 100,
+    });
 
-        // Set username
-        row.set('username', value);
+    // branch fields
+    await Promise.all(config.get('user.fields').slice(0).filter(field => field.grid).map(async (field, i) => {
+      // add config field
+      await formHelper.column(req, form, userGrid, field, {
+        priority : 100 - i,
+      });
+    }));
 
-        // Save
-        await row.save(req.user);
+    // add extra columns
+    userGrid.column('updated_at', {
+      tag      : 'grid-date',
+      sort     : true,
+      title    : 'Updated',
+      priority : 4,
+    }).column('created_at', {
+      tag      : 'grid-date',
+      sort     : true,
+      title    : 'Created',
+      priority : 3,
+    }).column('actions', {
+      tag      : 'user-actions',
+      type     : false,
+      width    : '1%',
+      title    : 'Actions',
+      priority : 0,
+    });
 
-        // Unlock
-        row.unlock();
-      },
-    }).column('email', {
-      sort   : true,
-      title  : 'Email',
-      format : (col) => {
-        return col ? col.toString() : '<i>N/A</i>';
-      },
-      input  : 'email',
-      update : async (row, value) => {
-        // Set value
-        await row.lock();
-
-        // Set username
-        row.set('email', value);
-
-        // Save
-        await row.save(req.user);
-
-        // Unlock
-        row.unlock();
-      },
-    }).column('acl', {
-      title  : 'Roles',
-      format : async (col, row) => {
-        // Fetch acls
-        const fetchedAcls = await row.get('acl');
-
-        // Return if none
-        if (fetchedAcls === null || fetchedAcls === undefined) {
-          return '';
-        }
-
-        // Set acls
-        const acls = fetchedAcls.filter(acl => acl && acl.get);
-
-        // Return mapped
-        return acls.map(acl => acl.get('name')).join(', ');
-      },
-    })
-      .column('updated_at', {
-        sort   : true,
-        title  : 'Last Online',
-        format : (col) => {
-          return col ? col.toLocaleDateString('en-GB', {
-            day   : 'numeric',
-            month : 'short',
-            year  : 'numeric',
-          }) : '<i>N/A</i>';
-        },
-        input  : 'date',
-        update : async (row, value) => {
-        // Set value
-          await row.lock();
-
-          // Set username
-          row.set('updated_at', new Date(value));
-
-          // Save
-          await row.save(req.user);
-
-          // Unlock
-          row.unlock();
-        },
-      })
-      .column('created_at', {
-        sort   : true,
-        title  : 'Registered',
-        format : (col) => {
-          return col ? col.toLocaleDateString('en-GB', {
-            day   : 'numeric',
-            month : 'short',
-            year  : 'numeric',
-          }) : '<i>N/A</i>';
-        },
-        input  : 'date',
-        update : async (row, value) => {
-        // Set value
-          await row.lock();
-
-          // Set username
-          row.set('created_at', new Date(value));
-
-          // Save
-          await row.save(req.user);
-
-          // Unlock
-          row.unlock();
-        },
-      })
-      .column('actions', {
-        type   : false,
-        width  : '1%',
-        title  : 'Actions',
-        format : (col, row) => {
-          return [
-            '<div class="btn-group btn-group-sm" role="group">',
-            `<a href="/admin/user/${row.get('_id').toString()}/update" class="btn btn-primary">`,
-            '<i class="fa fa-pencil"></i>',
-            '</a>',
-            `<a href="/admin/user/${row.get('_id').toString()}/remove" class="btn btn-danger">`,
-            '<i class="fa fa-times"></i>',
-            '</a>',
-            '</div>',
-          ].join('');
+    // branch filters
+    config.get('user.fields').slice(0).filter(field => field.grid).forEach((field) => {
+      // add config field
+      userGrid.filter(field.name, {
+        type  : 'text',
+        title : field.label,
+        query : (param) => {
+          // Another where
+          userGrid.match(field.name, new RegExp(escapeRegex(param.toString().toLowerCase()), 'i'));
         },
       });
-
-    // Add grid filters
-    userGrid.filter('username', {
-      title : 'Username',
-      type  : 'text',
-      query : (param) => {
-        // Another where
-        userGrid.match('username', new RegExp(escapeRegex(param.toString().toLowerCase()), 'i'));
-      },
-    }).filter('email', {
-      title : 'Email',
-      type  : 'text',
-      query : (param) => {
-        // Another where
-        userGrid.match('email', new RegExp(escapeRegex(param.toString().toLowerCase()), 'i'));
-      },
     });
 
     // Set default sort order
     userGrid.sort('created_at', 1);
 
-    // Return grid
+    // return user grid
     return userGrid;
   }
 }

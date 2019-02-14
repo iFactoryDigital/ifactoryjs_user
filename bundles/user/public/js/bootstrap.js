@@ -2,7 +2,8 @@
 let built = null;
 
 // Require riot
-const Events = require('events');
+const Events  = require('events');
+const dotProp = require('dot-prop');
 
 // Require dependencies
 const acl    = require('user/public/js/acl');
@@ -20,11 +21,9 @@ class EdenUser extends Events {
     // Run super
     super(...arguments);
 
-    // Set fields
-    this.fields = [];
-
     // Set private fields
-    this._user = null;
+    this.__data = {};
+    this.__fields = [];
 
     // Set acl
     this.acl = acl;
@@ -37,11 +36,49 @@ class EdenUser extends Events {
     this.refresh = this.refresh.bind(this);
 
     // Bind private methods
-    this._event = this._event.bind(this);
+    this.__update = this.__update.bind(this);
 
     // Build user
     this.building = this.build();
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // BUILD METHODS
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Builds user
+   */
+  build() {
+    // Set values
+    const user = store.get('user');
+
+    // Set user
+    this.__data = user;
+
+    // Pre user
+    store.pre('set', (data) => {
+      // Check key
+      if (data.key !== 'user') return;
+
+      // Set value
+      this.__update(data.val);
+
+      // Set val
+      data.val = this;
+    });
+
+    // On user socket
+    socket.on('user', this.__update);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // GET/SET METHODS
+  //
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * Sets key value
@@ -52,10 +89,10 @@ class EdenUser extends Events {
    */
   get(key) {
     // Check key
-    if (!key) return this._user;
+    if (!key) return this.__data;
 
     // Set key/value
-    return this._user[key];
+    return dotProp.get(this.__data, key);
   }
 
   /**
@@ -65,75 +102,34 @@ class EdenUser extends Events {
    * @param {*}      value
    */
   set(key, value) {
-    // Check values
-    if (['acl'].includes(key)) return;
-
-    // Set key/value
-    this[key] = value;
-    this._user[key] = value;
+    // set value
+    dotProp.set(this.__data, key, value);
 
     // Check in fields
-    if (!this.fields.includes(key)) this.fields.push(key);
+    if (!this.__fields.includes(key)) this.__fields.push(key);
 
     // Trigger key
     this.emit(key, value);
+
+    // set key
+    if (key.includes('.')) this.emit(key.split('.')[0], value);
+
+    // return this
+    return this.get(key);
   }
 
-  /**
-   * Builds user
-   */
-  build() {
-    // Set values
-    const User = store.get('user');
-
-    // Set user
-    this._user = User;
-
-    // Check user
-    for (const key in User) {
-      // Set value
-      this[key] = User[key];
-
-      // Check in fields
-      if (!this.fields.includes(key)) this.fields.push(key);
-    }
-
-    // Pre user
-    store.pre('set', (data) => {
-      // Check key
-      if (data.key !== 'user') return;
-
-      // Set value
-      this._event(data.val);
-
-      // Set val
-      data.val = this;
-    });
-
-    // On user socket
-    socket.on('user', this._event);
-  }
-
-  /**
-   * Refresh user
-   */
-  async refresh() {
-    // Refresh
-    this._event(await socket.call('user.refresh'));
-  }
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // MISC METHODS
+  //
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * Clears user
    */
   clear() {
     // Loop fields
-    this.fields.forEach((field) => {
-      // Delete key
-      delete this[field];
-    });
-
-    // Reset fields
-    this.fields = [];
+    this.__data = {};
   }
 
   /**
@@ -143,37 +139,46 @@ class EdenUser extends Events {
    */
   exists() {
     // Return this.id
-    return !!this.id;
+    return !!this.get('_id');
   }
+
+  /**
+   * Refresh user
+   */
+  async refresh() {
+    // Refresh
+    this.__update(await socket.call('user.refresh'));
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // UPDATE METHODS
+  //
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * Sets user
    *
    * @param  {Object} User
-   *
-   * @returns {*}
    */
-  _event(User) {
+  __update(user) {
     // Set built
     store.user = built;
 
-    // Set user
-    this._user = User;
-
     // Check no user
-    if (!User) return this.clear();
+    if (!user) return this.clear();
 
     // Emit stuff
-    for (const key in User) {
+    Object.keys(user).forEach((key) => {
       // Set value
-      if (this[key] !== User[key]) {
+      if (JSON.stringify(this.get(key)) !== JSON.stringify(user[key])) {
         // Set value
-        this.set(key, User[key]);
+        this.set(key, user[key]);
       }
 
       // Check in fields
-      if (!this.fields.includes(key)) this.fields.push(key);
-    }
+      if (!this.__fields.includes(key)) this.__fields.push(key);
+    });
 
     // Update user
     this.emit('update');
