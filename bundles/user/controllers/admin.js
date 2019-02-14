@@ -539,11 +539,9 @@ class AdminUserController extends Controller {
     const form = await formHelper.get('edenjs.user');
 
     // Set grid model
+    userGrid.id('admin.user');
     userGrid.model(User);
     userGrid.models(true);
-    userGrid.include({
-      form : await form.sanitise(),
-    });
 
     // Add grid columns
     userGrid.column('_id', {
@@ -553,9 +551,13 @@ class AdminUserController extends Controller {
     });
 
     // branch fields
-    await Promise.all(config.get('user.fields').slice(0).filter(field => field.grid).map(async (field, i) => {
+    await Promise.all((form.get('_id') ? form.get('fields') : config.get('user.fields').slice(0)).map(async (field, i) => {
+      // set found
+      const found = config.get('user.fields').find(f => f.name === field.name);
+
       // add config field
       await formHelper.column(req, form, userGrid, field, {
+        hidden   : !(found && found.grid),
         priority : 100 - i,
       });
     }));
