@@ -84,7 +84,7 @@ class AdminUserController extends Controller {
       return {
         tag  : 'grid',
         name : 'Users',
-        grid : await this._grid(req).render(fauxReq),
+        grid : await (await this._grid(req)).render(fauxReq),
       };
     }, async (req, block) => {
       // get notes block from db
