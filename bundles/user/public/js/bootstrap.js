@@ -162,7 +162,9 @@ class EdenUser extends Events {
    * @param  {Object} User
    */
   __update(user) {
-    console.log('update user', user);
+    // return if user is user entity
+    if (user.__data) return;
+
     // Set built
     store.user = built;
 
