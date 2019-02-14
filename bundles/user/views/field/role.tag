@@ -21,6 +21,16 @@
     
     // set initialized
     this.roles = opts.data.value || [];
+    
+    /**
+     * return value
+     *
+     * @return {*}
+     */
+    val() {
+      // return value
+      return this.refs.field.refs.select.val();
+    }
 
     /**
      * on mount function
