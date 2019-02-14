@@ -39,7 +39,6 @@ class UserDaemon extends Daemon {
 
       // emit changes to user
       user.emit('user', await user.sanitise());
-        console.log(opts);
     }, true);
   }
 }
