@@ -56,7 +56,7 @@ class EdenUser extends Events {
     const user = store.get('user');
 
     // Set user
-    this.__data = user;
+    this.__data = user || {};
 
     // Pre user
     store.pre('set', (data) => {
