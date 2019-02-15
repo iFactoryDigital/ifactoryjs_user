@@ -48,8 +48,8 @@ class AclStore {
     // Find failed test
     return !(tests.filter((test) => {
       // Check if true/false
-      if (test.toString() === 'true' && (!user || !user.id)) return true;
-      if (test.toString() === 'false' && (user && user.id)) return true;
+      if (test.toString() === 'true' && (!user || (!user._id && !(user.__data || {})._id))) return true;
+      if (test.toString() === 'false' && (user && (user._id || (user.__data || {})._id))) return true;
 
       // Check list
       if (list === true) return false;
