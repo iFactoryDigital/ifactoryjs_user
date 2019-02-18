@@ -19,7 +19,7 @@
           Update User
         </div>
         <div class="card-body">
-          <form-render action="/admin/user/{ opts.item.id }/update" method="post" ref="form" form={ opts.form } placement="edenjs.user" positions={ this.positions } preview={ this.preview } class="d-block mb-3" />
+          <form-render action="/admin/user/{ opts.item.id ? opts.item.id + '/update' : 'create' }" method="post" ref="form" form={ opts.form } placement="edenjs.user" positions={ this.positions } preview={ this.preview } class="d-block mb-3" />
         </div>
         <div class="card-footer text-right">
           <button type="button" onclick={ onSubmit } class={ 'btn btn-success' : true, 'disabled' : this.loading } disabled={ this.loading }>
