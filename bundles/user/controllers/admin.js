@@ -514,6 +514,7 @@ class AdminUserController extends Controller {
    * @param {Request}  req
    * @param {Response} res
    *
+   * @route {get}  /grid
    * @route {post} /grid
    *
    * @returns {Promise}

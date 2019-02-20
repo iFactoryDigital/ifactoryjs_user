@@ -84,6 +84,7 @@
         'type'     : field.type,
         'uuid'     : uuid(),
         'name'     : field.name,
+        'i18n'     : !!field.i18n,
         'label'    : field.label,
         'force'    : true,
         'multiple' : field.multiple,
