@@ -61,7 +61,7 @@ class UserController extends Controller {
     // On render
     this.eden.pre('view.compile', (render) => {
       // Move menus
-      if (render.state.user) render.user = render.state.user;
+      if (render.state.user && !render.isJSON) render.user = render.state.user;
 
       // Delete from state
       delete render.state.user;
