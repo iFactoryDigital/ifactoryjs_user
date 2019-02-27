@@ -114,7 +114,7 @@ class AclHelper {
    */
   async middleware(req, res) {
     // Check route has acl
-    if (!res.locals.route || !res.locals.route.acl || !res.locals.route.acl.length) return true;
+    if (!res.locals.route || (typeof res.locals.route.acl === 'undefined')) return true;
 
     // Check acl
     const check = await this.validate(req.user, res.locals.route.acl);
