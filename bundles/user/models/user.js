@@ -60,10 +60,10 @@ class User extends Model {
    */
   name() {
     // Check name
-    const name = `${this.get('first') || ''} ${this.get('last') || ''}`;
+    const name = this.get('name') || `${this.get('first') || ''} ${this.get('last') || ''}`;
 
     // Return name
-    return (name === ' ' ? (this.get('email') || this.get('username')) : name).trim();
+    return (!name.trim().length ? (this.get('username') || this.get('email')) : name).trim();
   }
 
   /**
