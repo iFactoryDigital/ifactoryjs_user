@@ -232,7 +232,7 @@ class AdminUserController extends Controller {
     res.json((await Promise.all(users.map(user => user.sanitise()))).map((sanitised) => {
       // return object
       return {
-        text  : sanitised.name,
+        text  : sanitised.name || sanitised.username || sanitised.email,
         data  : sanitised,
         value : sanitised.id,
       };
