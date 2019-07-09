@@ -5,13 +5,6 @@ const Model = require('model');
  * Create login model class
  */
 class Login extends Model {
-  /**
-   * Construct login model class
-   */
-  constructor() {
-    // Run super
-    super(...arguments);
-  }
 }
 
 /**
@@ -19,4 +12,4 @@ class Login extends Model {
  *
  * @type {login}
  */
-exports = module.exports = Login;
+module.exports = Login;

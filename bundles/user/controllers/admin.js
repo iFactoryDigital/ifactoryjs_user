@@ -3,7 +3,6 @@
 const Grid        = require('grid');
 const alert       = require('alert');
 const config      = require('config');
-const crypto      = require('crypto');
 const Controller  = require('controller');
 const escapeRegex = require('escape-string-regexp');
 
@@ -114,10 +113,14 @@ class AdminUserController extends Controller {
     }, async (req, field, value) => {
       // set tag
       field.tag = 'role';
-      field.value = value ? (Array.isArray(value) ? await Promise.all(value.map(item => item.sanitise())) : await value.sanitise()) : null;
+      // eslint-disable-next-line no-nested-ternary
+      field.value = value ? (Array.isArray(value) ? await Promise.all(value.map((item) => {
+        // return sanitise
+        return item.sanitise();
+      })) : await value.sanitise()) : null;
       // return
       return field;
-    }, async (req, field) => {
+    }, async () => {
       // save field
     }, async (req, field, value, old) => {
       // check value
@@ -150,10 +153,14 @@ class AdminUserController extends Controller {
     }, async (req, field, value) => {
       // set tag
       field.tag = 'user';
-      field.value = value ? (Array.isArray(value) ? await Promise.all(value.map(item => item.sanitise())) : await value.sanitise()) : null;
+      // eslint-disable-next-line no-nested-ternary
+      field.value = value ? (Array.isArray(value) ? await Promise.all(value.map((item) => {
+        // return sanitised
+        return item.sanitise();
+      })) : await value.sanitise()) : null;
       // return
       return field;
-    }, async (req, field) => {
+    }, async () => {
       // save field
     }, async (req, field, value, old) => {
       // check value
@@ -608,4 +615,4 @@ class AdminUserController extends Controller {
  *
  * @type {admin}
  */
-exports = module.exports = AdminUserController;
+module.exports = AdminUserController;

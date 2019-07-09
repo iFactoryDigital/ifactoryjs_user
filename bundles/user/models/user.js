@@ -1,5 +1,4 @@
 // Require local dependencies
-const eden   = require('eden');
 const Model  = require('model');
 const config = require('config');
 const crypto = require('crypto');
@@ -12,9 +11,9 @@ class User extends Model {
   /**
    * Construct user model class
    */
-  constructor() {
+  constructor(...args) {
     // Run super
-    super(...arguments);
+    super(...args);
 
     // Bind auth methods
     this.authenticate = this.authenticate.bind(this);
@@ -111,10 +110,15 @@ class User extends Model {
     for (const field of config.get('user.fields')) {
       // set sanitised
       sanitised[field.name] = await this.get(field.name);
+      // eslint-disable-next-line max-len
       sanitised[field.name] = sanitised[field.name] && sanitised[field.name].sanitise ? await sanitised[field.name].sanitise() : sanitised[field.name];
+      // eslint-disable-next-line max-len
       sanitised[field.name] = Array.isArray(sanitised[field.name]) ? await Promise.all(sanitised[field.name].map((val) => {
         // return sanitised value
         if (val.sanitise) return val.sanitise();
+
+        // return nothing
+        return null;
       })) : sanitised[field.name];
     }
 
@@ -133,4 +137,4 @@ class User extends Model {
  * Export user model
  * @type {user}
  */
-exports = module.exports = User;
+module.exports = User;

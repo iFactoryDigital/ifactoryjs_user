@@ -7,14 +7,6 @@ const Model = require('model');
  */
 class Acl extends Model {
   /**
-   * Construct acl model
-   */
-  constructor() {
-    // Run super
-    super(...arguments);
-  }
-
-  /**
    * Sanitises acl class
    *
    * @return {*}
@@ -33,4 +25,4 @@ class Acl extends Model {
  * Export acl model
  * @type {acl}
  */
-exports = module.exports = Acl;
+module.exports = Acl;

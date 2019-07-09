@@ -1,3 +1,5 @@
+/* eslint-disable global-require */
+/* eslint-disable no-underscore-dangle */
 
 // get dotProp
 const dotProp = require('dot-prop');

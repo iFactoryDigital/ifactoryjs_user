@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 // Require dependencies
 const dotProp = require('dot-prop-immutable');
 
@@ -96,4 +97,4 @@ class AclStore {
  *
  * @type {acl}
  */
-exports = module.exports = new AclStore();
+module.exports = new AclStore();

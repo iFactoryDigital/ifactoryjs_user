@@ -111,12 +111,12 @@ class UserController extends Controller {
         for         : ['frontend'],
         title       : `${upper} Form`,
         description : `${upper} Form block`,
-      }, async (req, block) => {
+      }, async () => {
         // return
         return {
           tag : b,
         };
-      }, async (req, block) => { });
+      }, async () => { });
     });
   }
 
@@ -149,7 +149,7 @@ class UserController extends Controller {
    */
   async listenAction(id, uuid, opts) {
     // / return if no id
-    if (!id) return;
+    if (!id) return null;
 
     // join room
     opts.socket.join(`user.${id}`);
@@ -169,7 +169,7 @@ class UserController extends Controller {
    */
   async deafenAction(id, uuid, opts) {
     // / return if no id
-    if (!id) return;
+    if (!id) return null;
 
     // join room
     opts.socket.leave(`user.${id}`);
@@ -234,7 +234,7 @@ class UserController extends Controller {
       }
 
       // Do passport login
-      req.login(user, {}, async () => {
+      return req.login(user, {}, async () => {
         // Emit to socket
         socket.session(req.sessionID, 'user', await user.sanitise());
 
@@ -292,7 +292,7 @@ class UserController extends Controller {
     }
 
     // Render login page
-    res.render('forgot');
+    return res.render('forgot');
   }
 
   /**
@@ -363,7 +363,7 @@ class UserController extends Controller {
     req.alert('success', 'Successfully updated your password');
 
     // Redirect to login
-    res.redirect('/login');
+    return res.redirect('/login');
   }
 
   /**
@@ -596,7 +596,7 @@ class UserController extends Controller {
       }
 
       // Save user
-      await user.save(req.user);
+      return await user.save(req.user);
     });
 
     // Log user in
@@ -620,6 +620,9 @@ class UserController extends Controller {
         res.redirect(req.query.redirect || req.body.redirect || '/');
       });
     }
+
+    // return null
+    return null;
   }
 
   /**
@@ -652,21 +655,21 @@ class UserController extends Controller {
     acls.push(...(config.get('acl.admin') || []).slice(0));
 
     // Check acls
-    for (let i = 0; i < acls.length; i++) {
+    await Promise.all(acls.map(async (acl) => {
       // Load acl
       const check = await Acl.count({
-        name : acls[i].name,
+        name : acl.name,
       });
 
       // Creat if not exists
       if (!check) {
         // Set create
-        const create = new Acl(acls[i]);
+        const create = new Acl(acl);
 
         // Save
         await create.save(null);
       }
-    }
+    }));
   }
 
   /**
@@ -697,7 +700,7 @@ class UserController extends Controller {
     // Load user
     let def  = (config.get('acl.default') || []).slice(0);
     const acls = [];
-    const user = obj.user;
+    const { user } = obj;
 
     // Set as array
     if (!Array.isArray(def)) def = [def];
@@ -711,7 +714,7 @@ class UserController extends Controller {
     }
 
     // Load acls
-    for (let i = 0; i < def.length; i++) {
+    for (let i = 0; i < def.length; i += 1) {
       // Load acl
       const check = await Acl.findOne({
         name : def[i].name,
@@ -779,7 +782,7 @@ class UserController extends Controller {
     }
 
     // Send done
-    done(null, user);
+    return done(null, user);
   }
 
   /**
@@ -802,4 +805,4 @@ class UserController extends Controller {
  *
  * @type {UserController}
  */
-exports = module.exports = UserController;
+module.exports = UserController;

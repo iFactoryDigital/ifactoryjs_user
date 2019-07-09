@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 
 // Create mixin
 riot.mixin('acl', {

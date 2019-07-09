@@ -1,4 +1,4 @@
 // Export Grid helper instance
-exports = module.exports = {
+module.exports = {
   acl : helper('user/acl'),
 };

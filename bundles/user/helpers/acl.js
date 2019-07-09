@@ -153,4 +153,4 @@ class AclHelper {
  *
  * @type {AclHelper}
  */
-exports = module.exports = new AclHelper();
+module.exports = new AclHelper();
