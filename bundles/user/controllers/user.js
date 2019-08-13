@@ -348,6 +348,8 @@ class UserController extends Controller {
       });
     }
 
+    console.log(config);
+
     // Everything checks out
     const hash = crypto.createHmac('sha256', config.get('secret'))
       .update(req.body.password)
