@@ -11,7 +11,7 @@ class Acl extends Model {
    *
    * @return {*}
    */
-  sanitise(...args) {
+  async sanitise(...args) {
     // Return id/name/value
     const sanitised = {
       id    : this.get('_id') ? this.get('_id').toString() : false,
