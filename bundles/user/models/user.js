@@ -118,7 +118,7 @@ class User extends Model {
         if (val.sanitise) return val.sanitise();
 
         // return nothing
-        return null;
+        return val;
       })) : sanitised[field.name];
     }
 
