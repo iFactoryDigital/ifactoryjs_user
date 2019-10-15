@@ -1,5 +1,5 @@
 {
-  "name": "@edenjs/user",
+  "name": "@ifactoryjs/user",
   "description": "",
   "version": "1.1.6",
   "dependencies": {
@@ -17,14 +17,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eden-js/user.git"
+    "url": "git+https://github.com/ifactorydigital/ifactoryjs_user.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/eden-js/user/issues"
+    "url": "https://github.com/ifactorydigital/ifactoryjs_user/issues"
   },
-  "homepage": "https://github.com/eden-js/user#readme",
+  "homepage": "https://github.com/ifactorydigital/ifactoryjs_user#readme",
   "devDependencies": {
     "eslint": "^5.13.0",
     "@edenjs/eslint-config-eden": "^2.0.14",
