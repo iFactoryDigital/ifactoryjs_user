@@ -7,6 +7,7 @@ const socket      = require('socket');
 const passport    = require('passport');
 const Controller  = require('controller');
 const escapeRegex = require('escape-string-regexp');
+const svgCaptcha = require('svg-captcha');
 
 // Require models
 const Acl   = model('acl');
@@ -192,10 +193,40 @@ class UserController extends Controller {
    * @priority 2
    */
   loginAction(req, res) {
+    const captcha = this._getCaptcha();
+
     // Render login page
     res.render('login', {
       redirect : req.query.redirect || false,
+      captcha  : config.get('localcaptcha') ? captcha : ''
     });
+  }
+
+  /**
+   *
+   *
+   * @param {Request} req
+   * @param {Response} res
+   *
+   * @route   {post} /checkcaptcha
+   * @return  {*}
+   * @layout  admin
+   */
+  checkCaptcha(req, res) {
+    let result = false;
+    if (req.data === req.userinput) {
+      result = true;
+    }
+    res.json({
+      success : result
+    });
+  }
+
+  _getCaptcha() {
+    let options = {
+      size: 10,
+    }
+    return svgCaptcha.create(options);
   }
 
   /**
@@ -226,10 +257,12 @@ class UserController extends Controller {
           message : err || info.message,
         });
 
+        const captcha = this._getCaptcha();
         // Render login page
         return res.render('login', {
           old      : req.body,
           redirect : (req.query || {}).redirect || req.body.redirect || false,
+          captcha  : config.get('localcaptcha') ? captcha : ''
         });
       }
 
